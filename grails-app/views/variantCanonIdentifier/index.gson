@@ -1,0 +1,8 @@
+import org.jax.mvarcore.VariantCanonIdentifier
+
+model {
+	Iterable<VariantCanonIdentifier> variantCanonIdentifierList
+}
+
+json tmpl.variantCanonIdentifier(variantCanonIdentifierList ?: [])
+

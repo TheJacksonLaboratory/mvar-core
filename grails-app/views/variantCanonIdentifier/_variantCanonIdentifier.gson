@@ -1,0 +1,7 @@
+import org.jax.mvarcore.VariantCanonIdentifier
+
+model {
+	VariantCanonIdentifier variantCanonIdentifier
+}
+
+json g.render(variantCanonIdentifier, [resolveTemplate: false])

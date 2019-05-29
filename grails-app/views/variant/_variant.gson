@@ -1,0 +1,7 @@
+import org.jax.mvarcore.Variant
+
+model {
+	Variant variant
+}
+
+json g.render(variant, [resolveTemplate: false])

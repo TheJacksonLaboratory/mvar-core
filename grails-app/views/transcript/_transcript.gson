@@ -1,0 +1,7 @@
+import org.jax.mvarcore.Transcript
+
+model {
+	Transcript transcript
+}
+
+json g.render(transcript, [resolveTemplate: false])

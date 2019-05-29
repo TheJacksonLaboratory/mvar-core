@@ -1,0 +1,8 @@
+import org.jax.mvarcore.Transcript
+
+model {
+	Iterable<Transcript> transcriptList
+}
+
+json tmpl.transcript(transcriptList ?: [])
+

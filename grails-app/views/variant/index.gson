@@ -1,0 +1,8 @@
+import org.jax.mvarcore.Variant
+
+model {
+	Iterable<Variant> variantList
+}
+
+json tmpl.variant(variantList ?: [])
+

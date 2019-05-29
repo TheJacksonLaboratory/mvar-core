@@ -1,0 +1,7 @@
+import org.jax.mvarcore.Strain
+
+model {
+	Strain strain
+}
+
+json tmpl.strain(strain)
