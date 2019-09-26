@@ -43,7 +43,7 @@ class VcfFileUploadService {
         String vcfFileName = vcfFile.getName()
         String assembly = vcfFileName.substring(0, vcfFileName.indexOf("_"))
 
-        if (! isAcceptedAssembly(assembly)){
+        if (! isAcceptedAssembly(assembly.toLowerCase())){
             //Invalid file name. Expecting assembly as the first part of the file name
             return
         }
@@ -361,7 +361,7 @@ class VcfFileUploadService {
     private boolean isAcceptedAssembly(String inAssembly){
 
         //TODO define configuration for accepted assemblies
-        List<String> assemblies = ['GRCm38', 'NCBI37', 'NCBI36']
+        List<String> assemblies = ['grcm38', 'ncbi37', 'ncbi36']
         if (assemblies.contains(inAssembly))
             return true
         else
@@ -371,7 +371,7 @@ class VcfFileUploadService {
     private boolean isRefAssembly(String inAssembly){
 
         //TODO define configuration for reference assembly
-        String refAssembly = 'GRCm38'
+        String refAssembly = 'grcm38'
         if (inAssembly == refAssembly)
             return true
         else

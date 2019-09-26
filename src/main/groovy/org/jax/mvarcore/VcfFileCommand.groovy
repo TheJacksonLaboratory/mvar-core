@@ -21,7 +21,7 @@ class VcfFileCommand implements Validateable {
                 return false
             }
 
-            ['vcf'].any { extension ->
+            ['vcf', 'gz'].any { extension ->
 
                 val.originalFilename?.toLowerCase()?.endsWith(extension)
 
