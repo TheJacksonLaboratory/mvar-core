@@ -63,7 +63,7 @@ class Variant {
 //    }
 
     static hasMany = [identifier : Identifier, strains: Strain, hgvs: Hgvs, transcripts: Transcript]
-    static hasOne = [allele: Allele]
+    static hasOne = [gene: Gene]
 
     //static mappedBy = [hgvs: 'genomicRefSeqHgvs']
 

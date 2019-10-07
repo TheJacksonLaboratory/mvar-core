@@ -1,8 +1,0 @@
-import org.jax.mvarcore.Identifier
-
-model {
-	Iterable<Identifier> indentifierList
-}
-
-json tmpl.indentifier(indentifierList ?: [])
-

@@ -3,30 +3,30 @@ package org.jax.mvarcore
 import grails.validation.ValidationException
 import static org.springframework.http.HttpStatus.*
 
-class AlleleController {
+class GeneController {
 
-    AlleleService alleleService
+    GeneService geneService
 
     static responseFormats = ['json', 'xml']
     static allowedMethods = [save: "POST", update: "PUT", delete: "DELETE"]
 
     def index(Integer max) {
         params.max = Math.min(max ?: 10, 100)
-        respond alleleService.list(params), model:[alleleCount: alleleService.count()]
+        respond geneService.list(params), model:[alleleCount: geneService.count()]
     }
 
     def show(Long id) {
-        respond alleleService.get(id)
+        respond geneService.get(id)
     }
 
-    def save(Allele allele) {
+    def save(Gene allele) {
         if (allele == null) {
             render status: NOT_FOUND
             return
         }
 
         try {
-            alleleService.save(allele)
+            geneService.save(allele)
         } catch (ValidationException e) {
             respond allele.errors, view:'create'
             return
@@ -35,14 +35,14 @@ class AlleleController {
         respond allele, [status: CREATED, view:"show"]
     }
 
-    def update(Allele allele) {
+    def update(Gene allele) {
         if (allele == null) {
             render status: NOT_FOUND
             return
         }
 
         try {
-            alleleService.save(allele)
+            geneService.save(allele)
         } catch (ValidationException e) {
             respond allele.errors, view:'edit'
             return
@@ -57,7 +57,7 @@ class AlleleController {
             return
         }
 
-        alleleService.delete(id)
+        geneService.delete(id)
 
         render status: NO_CONTENT
     }

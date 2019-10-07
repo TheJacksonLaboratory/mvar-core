@@ -7,37 +7,37 @@ import org.hibernate.SessionFactory
 
 @Integration
 @Rollback
-class AlleleServiceSpec extends Specification {
+class IdentifierServiceSpec extends Specification {
 
-    AlleleService alleleService
+    IdentifierService indentifierService
     SessionFactory sessionFactory
 
     private Long setupData() {
         // TODO: Populate valid domain instances and return a valid ID
-        //new Allele(...).save(flush: true, failOnError: true)
-        //new Allele(...).save(flush: true, failOnError: true)
-        //Allele allele = new Allele(...).save(flush: true, failOnError: true)
-        //new Allele(...).save(flush: true, failOnError: true)
-        //new Allele(...).save(flush: true, failOnError: true)
+        //new Indentifier(...).save(flush: true, failOnError: true)
+        //new Indentifier(...).save(flush: true, failOnError: true)
+        //Indentifier indentifier = new Indentifier(...).save(flush: true, failOnError: true)
+        //new Indentifier(...).save(flush: true, failOnError: true)
+        //new Indentifier(...).save(flush: true, failOnError: true)
         assert false, "TODO: Provide a setupData() implementation for this generated test suite"
-        //allele.id
+        //indentifier.id
     }
 
     void "test get"() {
         setupData()
 
         expect:
-        alleleService.get(1) != null
+        indentifierService.get(1) != null
     }
 
     void "test list"() {
         setupData()
 
         when:
-        List<Allele> alleleList = alleleService.list(max: 2, offset: 2)
+        List<Identifier> indentifierList = indentifierService.list(max: 2, offset: 2)
 
         then:
-        alleleList.size() == 2
+        indentifierList.size() == 2
         assert false, "TODO: Verify the correct instances are returned"
     }
 
@@ -45,30 +45,30 @@ class AlleleServiceSpec extends Specification {
         setupData()
 
         expect:
-        alleleService.count() == 5
+        indentifierService.count() == 5
     }
 
     void "test delete"() {
-        Long alleleId = setupData()
+        Long indentifierId = setupData()
 
         expect:
-        alleleService.count() == 5
+        indentifierService.count() == 5
 
         when:
-        alleleService.delete(alleleId)
+        indentifierService.delete(indentifierId)
         sessionFactory.currentSession.flush()
 
         then:
-        alleleService.count() == 4
+        indentifierService.count() == 4
     }
 
     void "test save"() {
         when:
         assert false, "TODO: Provide a valid instance to save"
-        Allele allele = new Allele()
-        alleleService.save(allele)
+        Identifier indentifier = new Identifier()
+        indentifierService.save(indentifier)
 
         then:
-        allele.id != null
+        indentifier.id != null
     }
 }

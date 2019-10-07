@@ -2,15 +2,15 @@ package org.jax.mvarcore
 
 import grails.testing.mixin.integration.Integration
 import grails.transaction.*
-import static grails.web.http.HttpHeaders.*
+
 import static org.springframework.http.HttpStatus.*
-import spock.lang.*
+
 import geb.spock.*
 import grails.plugins.rest.client.RestBuilder
 
 @Integration
 @Rollback
-class AlleleFunctionalSpec extends GebSpec {
+class GeneFunctionalSpec extends GebSpec {
 
     RestBuilder getRestBuilder() {
         new RestBuilder()
@@ -60,7 +60,7 @@ class AlleleFunctionalSpec extends GebSpec {
         then:"The response is correct"
         response.status == CREATED.value()
         response.json.id
-        Allele.count() == 1
+        Gene.count() == 1
     }
 
     void "Test the update action correctly updates an instance"() {
@@ -134,6 +134,6 @@ class AlleleFunctionalSpec extends GebSpec {
 
         then:"The response is correct"
         response.status == NO_CONTENT.value()        
-        !Allele.get(id)
+        !Gene.get(id)
     }    
 }

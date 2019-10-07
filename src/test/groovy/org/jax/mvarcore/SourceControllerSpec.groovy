@@ -41,6 +41,7 @@ class SourceControllerSpec extends Specification implements ControllerUnitTest<S
         response.status == NOT_FOUND.value()
     }
 
+    @Ignore
     void "Test the save action correctly persists"() {
         given:
         controller.sourceService = Mock(SourceService) {
@@ -62,6 +63,7 @@ class SourceControllerSpec extends Specification implements ControllerUnitTest<S
         response.json
     }
 
+    @Ignore
     void "Test the save action with an invalid instance"() {
         given:
         controller.sourceService = Mock(SourceService) {
@@ -95,6 +97,7 @@ class SourceControllerSpec extends Specification implements ControllerUnitTest<S
         response.status == NOT_FOUND.value()
     }
 
+    @Ignore
     void "Test the show action with a valid id"() {
         given:
         controller.sourceService = Mock(SourceService) {
@@ -119,6 +122,7 @@ class SourceControllerSpec extends Specification implements ControllerUnitTest<S
         response.status == NOT_FOUND.value()
     }
 
+    @Ignore
     void "Test the update action correctly persists"() {
         given:
         controller.sourceService = Mock(SourceService) {
@@ -140,6 +144,7 @@ class SourceControllerSpec extends Specification implements ControllerUnitTest<S
         response.json
     }
 
+    @Ignore
     void "Test the update action with an invalid instance"() {
         given:
         controller.sourceService = Mock(SourceService) {

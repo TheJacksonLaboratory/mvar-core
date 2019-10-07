@@ -1,7 +1,0 @@
-import org.jax.mvarcore.Allele
-
-model {
-	Allele allele
-}
-
-json g.render(allele, [resolveTemplate: false])
