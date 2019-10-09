@@ -47,7 +47,6 @@ class VcfFileUploadController {
 
             File vcfFile = new File(path + '/' + vcfFileCmd.vcfFile.getOriginalFilename())
             vcfFileCmd.vcfFile.transferTo(vcfFile)
-            println("about to load")
             vcfFileUploadService.loadVCF(vcfFile)
 
         }catch (ValidationException | Exception e){

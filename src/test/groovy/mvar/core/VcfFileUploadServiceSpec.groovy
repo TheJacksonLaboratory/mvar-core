@@ -41,7 +41,7 @@ class VcfFileUploadServiceSpec extends Specification implements ServiceUnitTest<
             //service.loadVCF(file)
 
         then: 1==1
-        
+
 //TODO: unit testing with groovy sql
 //        then: "data in variant tables"
 //            1 * service.batchInsertCannonVariants() >> {}
