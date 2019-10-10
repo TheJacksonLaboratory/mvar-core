@@ -10,7 +10,6 @@ import org.springframework.dao.InvalidDataAccessApiUsageException
 
 import java.sql.Connection
 
-//import org.codehaus.groovy.grails.plugins.DomainClassGrailsPlugin.PROPERTY_INSTANCE_MAP
 
 @Transactional
 class VcfFileUploadService {
@@ -43,21 +42,22 @@ class VcfFileUploadService {
         println("Vcf file complete parsing and persistance: ${stopWatch} time: ${new Date()}")
     }
 
+    /**
+     *
+     * 1. parse the vcf -- by chromosome ,
+     * 2. Persist canonicals
+     * 3. persist variants
+     * 4. persist variant associations
+     *   - canonical
+     *   - strain
+     *   - gene
+     *   - jannovar data
+     *   - external ids
+     * 5. construct search doc -- TODO: possible search docs for speed querying of data in site
+     * @param vcfFile
+     * @return
+     */
     private persistData (File vcfFile){
-
-        /*
-            1. parse the vcf -- by chromosome ,
-            2. Persist canonicals
-            3. persist variants
-            4. persist variant associations
-                    - canonical
-                    - strain
-                    - gene
-                    - jannovar data
-                    - external ids
-            5. construct search doc -- TODO: possible search docs for speed querying of data in site
-        */
-
 
         String vcfFileName = vcfFile.getName()
         String assembly = vcfFileName.substring(0, vcfFileName.indexOf("_"))
