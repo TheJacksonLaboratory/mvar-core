@@ -1,7 +1,0 @@
-import org.jax.mvarcore.Identifier
-
-model {
-	Identifier indentifier
-}
-
-json g.render(indentifier, [resolveTemplate: false])

@@ -1,6 +1,6 @@
 package org.jax.mvarcore
 
-class Allele {
+class Gene {
 
     String name
     String chromosome

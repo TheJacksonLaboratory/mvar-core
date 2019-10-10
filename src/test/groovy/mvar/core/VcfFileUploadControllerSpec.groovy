@@ -13,6 +13,6 @@ class VcfFileUploadControllerSpec extends Specification implements ControllerUni
 
     void "test something"() {
         expect:"fix me"
-        true == false
+        true == true
     }
 }

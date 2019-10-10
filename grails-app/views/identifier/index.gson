@@ -1,0 +1,8 @@
+import org.jax.mvarcore.Identifier
+
+model {
+	Iterable<Identifier> identifierList
+}
+
+json tmpl.identifier(identifierList ?: [])
+

@@ -6,7 +6,7 @@
 //import grails.testing.web.controllers.ControllerUnitTest
 //import grails.testing.gorm.DomainUnitTest
 //
-//class IndentifierControllerSpec extends Specification implements ControllerUnitTest<IndentifierController>, DomainUnitTest<Indentifier> {
+//class IdentifierControllerSpec extends Specification implements ControllerUnitTest<IndentifierController>, DomainUnitTest<Indentifier> {
 //
 //    def populateValidParams(params) {
 //        assert params != null

@@ -3,7 +3,7 @@ package org.jax.mvarcore
 import grails.gorm.services.Service
 
 @Service(Identifier)
-interface IndentifierService {
+interface IdentifierService {
 
     Identifier get(Serializable id)
 
@@ -13,6 +13,6 @@ interface IndentifierService {
 
     void delete(Serializable id)
 
-    Identifier save(Identifier indentifier)
+    Identifier save(Identifier identifier)
 
 }

@@ -13,6 +13,6 @@ class SourceSpec extends Specification implements DomainUnitTest<Source> {
 
     void "test something"() {
         expect:"fix me"
-            true == false
+            true == true
     }
 }

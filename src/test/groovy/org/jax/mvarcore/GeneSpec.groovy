@@ -3,7 +3,7 @@ package org.jax.mvarcore
 import grails.testing.gorm.DomainUnitTest
 import spock.lang.Specification
 
-class AlleleSpec extends Specification implements DomainUnitTest<Allele> {
+class GeneSpec extends Specification implements DomainUnitTest<Gene> {
 
     def setup() {
     }
