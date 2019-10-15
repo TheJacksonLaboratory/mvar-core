@@ -74,10 +74,25 @@ class VcfFileUploadService {
             List<Map> vcfVariants = parseVcf(chr, vcfFile, assembly)
             println("CHR = " + chr + ', variant size= ' + vcfVariants.size())
 
-            ///batch inserts:
-            insertCanonVariantsBatch(vcfVariants)
-            insertVariantsBatch(vcfVariants)
-            //TODO Strain, gene, external id associations, and jannovar data
+            // batch insertions:
+            // 1.canonicalized variants
+            List<Map> batchOfCanonVars = []
+            List<String> batchOfParentVariantRef = []
+            // 2. variants
+            List<Map> batchOfVars = []
+            List<String> batchOfParentVariantRefTxt = []
+            List<String> batchOfVariantRefTxt = []
+
+            int batchSize = 500
+
+            vcfVariants.eachWithIndex { var, idx ->
+                // 1. canonicalized variant
+                insertCanonVariantsBatch(var, batchOfCanonVars, batchOfParentVariantRef, batchSize, idx)
+                // 2. variant
+                insertVariantsBatch(var, batchOfVars, batchOfParentVariantRefTxt, batchOfVariantRefTxt, batchSize, idx)
+                //TODO Strain, gene, external id associations, and jannovar data
+
+            }
 
 
             println("Chr= " + chr + " : persistance load = ${stopWatch} time: ${new Date()}")
@@ -131,49 +146,58 @@ class VcfFileUploadService {
 //        //sql.close()
 //
 //    }
+    
+    /**
+     *
+     * @param var
+     * @param batchOfVars
+     * @param batchOfParentVariantRefTxt
+     * @param batchOfVariantRefTxt
+     * @param batchSize
+     * @param idx
+     * @return
+     */
+    private insertVariantsBatch(Map var, List<Map> batchOfVars, List<String> batchOfParentVariantRefTxt, List<String> batchOfVariantRefTxt, int batchSize, int idx){
 
+        batchOfVars.add(var)
+        batchOfParentVariantRefTxt.add(var.parentVariantRef)
+        batchOfVariantRefTxt.add(var.variantRefTxt)
 
+        if (idx > 1 && idx % batchSize == 0) {
 
-    private insertVariantsBatch(List<Map> varList){
+            batchInsertVariants3(batchOfVars, batchOfVariantRefTxt, batchOfParentVariantRefTxt)
 
-        List<Map> batchOfVars = []
-        List<String> batchOfParentVariantRefTxt = []
-        List<String> batchOfVariantRefTxt = []
-        int batchSize = 500
-
-        varList.eachWithIndex { var, idx ->
-
-            batchOfVars.add(var)
-            batchOfParentVariantRefTxt.add(var.parentVariantRef)
-            batchOfVariantRefTxt.add(var.variantRefTxt)
-
-            if (idx > 1 && idx % batchSize == 0){
-
-                batchInsertVariants3(batchOfVars, batchOfVariantRefTxt, batchOfParentVariantRefTxt)
-
-                //clear batch lists
-                batchOfVars.clear()
-                batchOfParentVariantRefTxt.clear()
-                batchOfVariantRefTxt.clear()
-                cleanUpGorm()
-            }
+            //clear batch lists
+            batchOfVars.clear()
+            batchOfParentVariantRefTxt.clear()
+            batchOfVariantRefTxt.clear()
+            cleanUpGorm()
         }
 
         //last batch
-        if (batchOfVars.size() > 0){
-            batchInsertVariants3(batchOfVars, batchOfVariantRefTxt, batchOfParentVariantRefTxt)
+        if (idx == batchSize) {
+            if (batchOfVars.size() > 0) {
+                batchInsertVariants3(batchOfVars, batchOfVariantRefTxt, batchOfParentVariantRefTxt)
+            }
         }
 
     }
 
 
-    private batchInsertVariants3(List<Map> batchOfVars,  List<String> batchOfariantRefTxt, List<String> batchOfParentVariantRefTxt){
+    /**
+     *
+     * @param batchOfVars
+     * @param batchOfVariantRefTxt
+     * @param batchOfParentVariantRefTxt
+     * @return
+     */
+    private batchInsertVariants3(List<Map> batchOfVars,  List<String> batchOfVariantRefTxt, List<String> batchOfParentVariantRefTxt){
 
         String INSERT_INTO_DB_VARIANT = 'insert into variant (version, chr, position, alt, ref, type, assembly, parent_ref_ind, parent_variant_ref_txt, variant_ref_txt, canon_var_identifier_id) ' +
                 'VALUES (0, ?,?,?,?,?,?,?,?,?,?)' //  + SELECT_CANONICAL_ID + ')'
 
         int batchSize = 500
-        def foundRecs = Variant.findAllByVariantRefTxtInList(batchOfariantRefTxt)
+        def foundRecs = Variant.findAllByVariantRefTxtInList(batchOfVariantRefTxt)
         List<String> found = foundRecs.collect{
             it.variantRefTxt
         }
@@ -210,39 +234,42 @@ class VcfFileUploadService {
         }
     }
 
-    private insertCanonVariantsBatch(List<Map> varList){
+    /**
+     *
+     * @param var
+     * @param batchOfVars
+     * @param batchOfParentVariantRef
+     * @param batchSize
+     * @param idx
+     * @return
+     */
+    private insertCanonVariantsBatch(Map var, List<Map> batchOfVars, List<String> batchOfParentVariantRef, int batchSize, int idx){
 
         String UPDATE_CANONICAL_ID = 'update variant_canon_identifier set caid = concat(\'MCA_\', lpad(id, 14, 0)) where caid is NULL'
 
+        batchOfVars.add(var)
+        batchOfParentVariantRef.add(var.parentVariantRef)
 
-        List<Map> batchOfVars = []
-        List<String> batchOfParentVariantRef = []
-        int batchSize = 500
+        if (idx > 1 && idx % batchSize == 0){
+            batchInsertCannonVariants(batchOfVars, batchOfParentVariantRef)
 
-        varList.eachWithIndex { var, idx ->
-
-            batchOfVars.add(var)
-            batchOfParentVariantRef.add(var.parentVariantRef)
-
-            if (idx > 1 && idx % batchSize == 0){
-                batchInsertCannonVariants(batchOfVars, batchOfParentVariantRef)
-
-                //clear batch lists
-                batchOfVars.clear()
-                batchOfParentVariantRef.clear()
-                cleanUpGorm()
-            }
+            //clear batch lists
+            batchOfVars.clear()
+            batchOfParentVariantRef.clear()
+            cleanUpGorm()
         }
 
         //last batch
-        if (batchOfVars.size() > 0){
-            batchInsertCannonVariants(batchOfVars, batchOfParentVariantRef)
-        }
+        if (idx == batchSize) {
+            if (batchOfVars.size() > 0) {
+                batchInsertCannonVariants(batchOfVars, batchOfParentVariantRef)
+            }
 
-        // update canonical id
-        final Sql sql = getSql()
-        sql.execute(UPDATE_CANONICAL_ID)
-        //sql.commit()
+            // update canonical id
+            final Sql sql = getSql()
+            sql.execute(UPDATE_CANONICAL_ID)
+            //sql.commit()
+        }
     }
 
 
