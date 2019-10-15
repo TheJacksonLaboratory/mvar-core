@@ -2,7 +2,6 @@ package org.jax.mvarcore
 
 import org.junit.Before
 
-import javax.naming.directory.InvalidAttributesException
 
 class AnnotationParserTestCase extends GroovyTestCase {
 
@@ -19,10 +18,9 @@ class AnnotationParserTestCase extends GroovyTestCase {
     void testTooShortInfoString() {
         boolean exceptionCaught = false
         String exceptionMsg
-        AnnotationParser localParser
         try {
-            localParser = new AnnotationParser(SHORT_INFO_STRING)
-        } catch (InvalidAttributesException exception) {
+            new AnnotationParser(SHORT_INFO_STRING)
+        } catch (IllegalArgumentException exception) {
             exceptionCaught = true
             exceptionMsg = exception.getMessage()
         }
@@ -36,8 +34,8 @@ class AnnotationParserTestCase extends GroovyTestCase {
         String exceptionMsg
         AnnotationParser localParser
         try {
-            localParser = new AnnotationParser(WRONG_ID)
-        } catch (InvalidAttributesException exception) {
+            new AnnotationParser(WRONG_ID)
+        } catch (IllegalArgumentException exception) {
             exceptionCaught = true
             exceptionMsg = exception.getMessage()
         }
