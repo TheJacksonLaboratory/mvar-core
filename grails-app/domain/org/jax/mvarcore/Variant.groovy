@@ -12,15 +12,16 @@ class Variant {
     String functionalClassCode
     String assembly
     String accession
+    String variantRefTxt
     String parentVariantRefTxt //holds full variation change for the parent reference <chr_pos_ref_alt>  -- ref and alt is empty will have '.' as value
     boolean parentRefInd // should be set to true for GRCm38 assembly
 
 
     static mapping = {
         parentVariantRefTxt index: true
-        chr sqlType: "char", length: 3
-        ref sqlType: "char", length: 100
-        alt sqlType: "char", length: 100
+        chr sqlType: "char(3)"
+        ref sqlType: "char(100)"
+        alt sqlType: "char(100)"
     }
 
     /**
