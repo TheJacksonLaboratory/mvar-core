@@ -17,7 +17,7 @@ class VcfFileUploadService {
     def sessionFactory
 
 
-    public void loadVCF(File vcfFile){
+    public void loadVCF(File vcfFile) {
 
         StopWatch stopWatch = new StopWatch()
         stopWatch.start()
@@ -26,7 +26,7 @@ class VcfFileUploadService {
         String vcfFileName = vcfFile.getName()
         String assembly = vcfFileName.substring(0, vcfFileName.indexOf("_"))
 
-        if (! isAcceptedAssembly(assembly.toLowerCase())){
+        if (!isAcceptedAssembly(assembly.toLowerCase())) {
             //Invalid file name. Expecting assembly as the first part of the file name
             return
         }
@@ -34,7 +34,7 @@ class VcfFileUploadService {
         println("vcf File: " + vcfFileName)
         try {
             persistData(vcfFile)
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace()
         }
 
@@ -43,7 +43,7 @@ class VcfFileUploadService {
     }
 
     /**
-     *
+     * Persistence of the variation data with the following steps:
      * 1. parse the vcf -- by chromosome ,
      * 2. Persist canonicals
      * 3. persist variants
@@ -57,16 +57,16 @@ class VcfFileUploadService {
      * @param vcfFile
      * @return
      */
-    private persistData (File vcfFile){
+    private persistData(File vcfFile) {
 
         String vcfFileName = vcfFile.getName()
         String assembly = vcfFileName.substring(0, vcfFileName.indexOf("_"))
 
         //persist data by chromosome -- TODO: check potential for multi-threaded process
         //TODO: add mouse chr to config
-        List<String> mouseChromosomes = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19','X', 'Y', 'MT']
+        List<String> mouseChromosomes = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', 'X', 'Y', 'MT']
 
-        mouseChromosomes.each {chr ->
+        mouseChromosomes.each { chr ->
 
             StopWatch stopWatch = new StopWatch()
             stopWatch.start()
@@ -84,12 +84,13 @@ class VcfFileUploadService {
             List<String> batchOfVariantRefTxt = []
 
             int batchSize = 500
+            int size = vcfVariants.size()
 
             vcfVariants.eachWithIndex { var, idx ->
                 // 1. canonicalized variant
-                insertCanonVariantsBatch(var, batchOfCanonVars, batchOfParentVariantRef, batchSize, idx)
+                insertCanonVariantsBatch(var, batchOfCanonVars, batchOfParentVariantRef, batchSize, idx, size)
                 // 2. variant
-                insertVariantsBatch(var, batchOfVars, batchOfParentVariantRefTxt, batchOfVariantRefTxt, batchSize, idx)
+                insertVariantsBatch(var, batchOfVars, batchOfParentVariantRefTxt, batchOfVariantRefTxt, batchSize, idx, size)
                 //TODO Strain, gene, external id associations, and jannovar data
 
             }
@@ -103,7 +104,7 @@ class VcfFileUploadService {
 
     }
 
-    private void insertExternalIdentifiers(Map varIn){
+    private void insertExternalIdentifiers(Map varIn) {
 
 
     }
@@ -146,18 +147,19 @@ class VcfFileUploadService {
 //        //sql.close()
 //
 //    }
-    
+
     /**
-     *
-     * @param var
-     * @param batchOfVars
+     * Insert Variant in batch by batchSize
+     * @param var Map containing variant information
+     * @param batchOfVars temporary list of variants
      * @param batchOfParentVariantRefTxt
      * @param batchOfVariantRefTxt
-     * @param batchSize
-     * @param idx
+     * @param batchSize batch size
+     * @param idx index of list of variants
+     * @param size size of list of variants
      * @return
      */
-    private insertVariantsBatch(Map var, List<Map> batchOfVars, List<String> batchOfParentVariantRefTxt, List<String> batchOfVariantRefTxt, int batchSize, int idx){
+    private insertVariantsBatch(Map var, List<Map> batchOfVars, List<String> batchOfParentVariantRefTxt, List<String> batchOfVariantRefTxt, int batchSize, int idx, int size) {
 
         batchOfVars.add(var)
         batchOfParentVariantRefTxt.add(var.parentVariantRef)
@@ -175,7 +177,7 @@ class VcfFileUploadService {
         }
 
         //last batch
-        if (idx == batchSize) {
+        if (idx == size - 1) {
             if (batchOfVars.size() > 0) {
                 batchInsertVariants3(batchOfVars, batchOfVariantRefTxt, batchOfParentVariantRefTxt)
             }
@@ -191,14 +193,14 @@ class VcfFileUploadService {
      * @param batchOfParentVariantRefTxt
      * @return
      */
-    private batchInsertVariants3(List<Map> batchOfVars,  List<String> batchOfVariantRefTxt, List<String> batchOfParentVariantRefTxt){
+    private batchInsertVariants3(List<Map> batchOfVars, List<String> batchOfVariantRefTxt, List<String> batchOfParentVariantRefTxt) {
 
         String INSERT_INTO_DB_VARIANT = 'insert into variant (version, chr, position, alt, ref, type, assembly, parent_ref_ind, parent_variant_ref_txt, variant_ref_txt, canon_var_identifier_id) ' +
                 'VALUES (0, ?,?,?,?,?,?,?,?,?,?)' //  + SELECT_CANONICAL_ID + ')'
 
         int batchSize = 500
         def foundRecs = Variant.findAllByVariantRefTxtInList(batchOfVariantRefTxt)
-        List<String> found = foundRecs.collect{
+        List<String> found = foundRecs.collect {
             it.variantRefTxt
         }
 
@@ -215,7 +217,9 @@ class VcfFileUploadService {
                 } else {
 
                     //println("var = " + variant)
-                    VariantCanonIdentifier canonIdentifier = cannonRecs.find { it.variantRefTxt == variant.parentVariantRef}
+                    VariantCanonIdentifier canonIdentifier = cannonRecs.find {
+                        it.variantRefTxt == variant.parentVariantRef
+                    }
 
                     ps.addBatch([
                             variant.chr,
@@ -235,22 +239,23 @@ class VcfFileUploadService {
     }
 
     /**
-     *
-     * @param var
-     * @param batchOfVars
+     * Insert Canonicalized variant in batch by batchSize
+     * @param var map containing variant information
+     * @param batchOfVars list of variants used temporary data structure
      * @param batchOfParentVariantRef
-     * @param batchSize
-     * @param idx
+     * @param batchSize size of batch
+     * @param idx index of the list of variants
+     * @param size size of the list of variants
      * @return
      */
-    private insertCanonVariantsBatch(Map var, List<Map> batchOfVars, List<String> batchOfParentVariantRef, int batchSize, int idx){
+    private insertCanonVariantsBatch(Map var, List<Map> batchOfVars, List<String> batchOfParentVariantRef, int batchSize, int idx, int size) {
 
         String UPDATE_CANONICAL_ID = 'update variant_canon_identifier set caid = concat(\'MCA_\', lpad(id, 14, 0)) where caid is NULL'
 
         batchOfVars.add(var)
         batchOfParentVariantRef.add(var.parentVariantRef)
 
-        if (idx > 1 && idx % batchSize == 0){
+        if (idx > 1 && idx % batchSize == 0) {
             batchInsertCannonVariants(batchOfVars, batchOfParentVariantRef)
 
             //clear batch lists
@@ -260,7 +265,7 @@ class VcfFileUploadService {
         }
 
         //last batch
-        if (idx == batchSize) {
+        if (idx == size - 1) {
             if (batchOfVars.size() > 0) {
                 batchInsertCannonVariants(batchOfVars, batchOfParentVariantRef)
             }
@@ -273,13 +278,13 @@ class VcfFileUploadService {
     }
 
 
-    protected batchInsertCannonVariants(List<Map> batchOfVars,  List<String> batchOfParentVariantRef){
+    protected batchInsertCannonVariants(List<Map> batchOfVars, List<String> batchOfParentVariantRef) {
 
         String INSERT_INTO_DB_VARIANT_CANONICAL_ID = 'insert into variant_canon_identifier (version, chr, position, ref, alt, variant_ref_txt) VALUES (0, ?, ?, ?, ?, ?)'
 
         int batchSize = 500
         def foundRecs = VariantCanonIdentifier.findAllByVariantRefTxtInList(batchOfParentVariantRef)
-        List<String> found = foundRecs.collect{
+        List<String> found = foundRecs.collect {
             it.variantRefTxt
         }
 
@@ -325,7 +330,7 @@ class VcfFileUploadService {
     }
 
 
-    private boolean isAcceptedAssembly(String inAssembly){
+    private boolean isAcceptedAssembly(String inAssembly) {
 
         //TODO define configuration for accepted assemblies
         List<String> assemblies = ['grcm38', 'ncbi37', 'ncbi36']
@@ -335,7 +340,7 @@ class VcfFileUploadService {
             return false
     }
 
-    private boolean isRefAssembly(String inAssembly){
+    private boolean isRefAssembly(String inAssembly) {
 
         //TODO define configuration for reference assembly
         String refAssembly = 'grcm38'
@@ -356,7 +361,7 @@ class VcfFileUploadService {
         try {
 
             //vcfFileInputStream.line
-            def vcf = VCF.parse(vcfFile.getPath()){v->
+            def vcf = VCF.parse(vcfFile.getPath()) { v ->
 
                 v.chr == 'chr' + chromosome || v.chr == chromosome
             }
@@ -371,7 +376,7 @@ class VcfFileUploadService {
                 Map<String, String> variant = [:]
                 variant.put("ID", vcfVariant.getId())
                 variant.put("pos", vcfVariant.getPos())
-                variant.put("chr", vcfVariant.getChr().replace('ch','').replace('r',''))
+                variant.put("chr", vcfVariant.getChr().replace('ch', '').replace('r', ''))
                 variant.put("ref", vcfVariant.getRef())
                 variant.put("alt", vcfVariant.getAlt())
                 variant.put("type", vcfVariant.getType())
@@ -390,10 +395,10 @@ class VcfFileUploadService {
 
                     variant.pos = vcfVariant.getInfo().OriginalStart
                     variant.isParentVariant = false
-                }else if(refAssembly) {
+                } else if (refAssembly) {
 
                     variant.isParentVariant = true
-                }else{
+                } else {
                     //something is wrong. Either
                     //-liftover variants should have original position  OR
                     //-refAssembly should be GRCm38
@@ -402,7 +407,7 @@ class VcfFileUploadService {
                 }
 
 
-                if (! vcfVariant.getInfo().OriginalAlleles){
+                if (!vcfVariant.getInfo().OriginalAlleles) {
                     // if original alleles properties are missed in liftover then they are the same
                     //TODO check and assign values when original alleles are different in liftover variant
                     variant.put("ref", vcfVariant.getRef())
@@ -417,7 +422,7 @@ class VcfFileUploadService {
                 variantList.add(variant)
 
             }
-        }catch (Exception e){
+        } catch (Exception e) {
 
             String error = "Error reading the VCF file " + e.getMessage()
             println(error)
