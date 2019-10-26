@@ -6,6 +6,7 @@ import groovy.sql.BatchingPreparedStatementWrapper
 import groovy.sql.Sql
 import org.apache.commons.lang.time.StopWatch
 import org.hibernate.internal.SessionImpl
+import org.jax.mvarcore.jannovar.JannovarUtility
 import org.springframework.dao.InvalidDataAccessApiUsageException
 
 import java.sql.Connection
@@ -75,10 +76,7 @@ class VcfFileUploadService {
             println("CHR = " + chr + ', variant size= ' + vcfVariants.size())
 
             ///batch inserts:
-            insertCanonVariantsBatch(vcfVariants)
-            insertVariantsBatch(vcfVariants)
-            //TODO Strain, gene, external id associations, and jannovar data
-
+            insertVariants(vcfVariants)
 
             println("Chr= " + chr + " : persistance load = ${stopWatch} time: ${new Date()}")
             stopWatch.reset()
@@ -132,88 +130,14 @@ class VcfFileUploadService {
 //
 //    }
 
-
-
-    private insertVariantsBatch(List<Map> varList){
-
-        List<Map> batchOfVars = []
-        List<String> batchOfParentVariantRefTxt = []
-        List<String> batchOfVariantRefTxt = []
-        int batchSize = 500
-
-        varList.eachWithIndex { var, idx ->
-
-            batchOfVars.add(var)
-            batchOfParentVariantRefTxt.add(var.parentVariantRef)
-            batchOfVariantRefTxt.add(var.variantRefTxt)
-
-            if (idx > 1 && idx % batchSize == 0){
-
-                batchInsertVariants3(batchOfVars, batchOfVariantRefTxt, batchOfParentVariantRefTxt)
-
-                //clear batch lists
-                batchOfVars.clear()
-                batchOfParentVariantRefTxt.clear()
-                batchOfVariantRefTxt.clear()
-                cleanUpGorm()
-            }
-        }
-
-        //last batch
-        if (batchOfVars.size() > 0){
-            batchInsertVariants3(batchOfVars, batchOfVariantRefTxt, batchOfParentVariantRefTxt)
-        }
-
-    }
-
-
-    private batchInsertVariants3(List<Map> batchOfVars,  List<String> batchOfariantRefTxt, List<String> batchOfParentVariantRefTxt){
-
-        String INSERT_INTO_DB_VARIANT = 'insert into variant (version, chr, position, alt, ref, type, assembly, parent_ref_ind, parent_variant_ref_txt, variant_ref_txt, canon_var_identifier_id) ' +
-                'VALUES (0, ?,?,?,?,?,?,?,?,?,?)' //  + SELECT_CANONICAL_ID + ')'
-
-        int batchSize = 500
-        def foundRecs = Variant.findAllByVariantRefTxtInList(batchOfariantRefTxt)
-        List<String> found = foundRecs.collect{
-            it.variantRefTxt
-        }
-
-        def cannonRecs = VariantCanonIdentifier.findAllByVariantRefTxtInList(batchOfParentVariantRefTxt)
-
-
-        final Sql sql = getSql()
-        sql.withBatch(batchSize, INSERT_INTO_DB_VARIANT) { BatchingPreparedStatementWrapper ps ->
-
-            batchOfVars.eachWithIndex { variant, idx2 ->
-                if (found.find { it == variant.variantRefTxt }) {
-                    println(idx2 + " Existing record ID = " + variant.variantRefTxt)
-
-                } else {
-
-                    //println("var = " + variant)
-                    VariantCanonIdentifier canonIdentifier = cannonRecs.find { it.variantRefTxt == variant.parentVariantRef}
-
-                    ps.addBatch([
-                            variant.chr,
-                            variant.pos,
-                            variant.alt,
-                            variant.ref,
-                            variant.type,
-                            variant.assembly,
-                            variant.isParentVariant,
-                            variant.parentVariantRef,
-                            variant.variantRefTxt,
-                            canonIdentifier.id
-                    ])
-                }
-            }
-        }
-    }
-
-    private insertCanonVariantsBatch(List<Map> varList){
+    /**
+     * Insert variants
+     * @param varList
+     * @return
+     */
+    private insertVariants(List<Map> varList){
 
         String UPDATE_CANONICAL_ID = 'update variant_canon_identifier set caid = concat(\'MCA_\', lpad(id, 14, 0)) where caid is NULL'
-
 
         List<Map> batchOfVars = []
         List<String> batchOfParentVariantRef = []
@@ -225,7 +149,7 @@ class VcfFileUploadService {
             batchOfParentVariantRef.add(var.parentVariantRef)
 
             if (idx > 1 && idx % batchSize == 0){
-                batchInsertCannonVariants(batchOfVars, batchOfParentVariantRef)
+                batchInsertStoredProcedure(batchOfVars, batchOfParentVariantRef, batchSize)
 
                 //clear batch lists
                 batchOfVars.clear()
@@ -236,7 +160,7 @@ class VcfFileUploadService {
 
         //last batch
         if (batchOfVars.size() > 0){
-            batchInsertCannonVariants(batchOfVars, batchOfParentVariantRef)
+            batchInsertStoredProcedure(batchOfVars, batchOfParentVariantRef, batchSize)
         }
 
         // update canonical id
@@ -244,39 +168,58 @@ class VcfFileUploadService {
         sql.execute(UPDATE_CANONICAL_ID)
         //sql.commit()
     }
-
-
-    protected batchInsertCannonVariants(List<Map> batchOfVars,  List<String> batchOfParentVariantRef){
-
-        String INSERT_INTO_DB_VARIANT_CANONICAL_ID = 'insert into variant_canon_identifier (version, chr, position, ref, alt, variant_ref_txt) VALUES (0, ?, ?, ?, ?, ?)'
-
-        int batchSize = 500
-        def foundRecs = VariantCanonIdentifier.findAllByVariantRefTxtInList(batchOfParentVariantRef)
-        List<String> found = foundRecs.collect{
-            it.variantRefTxt
-        }
-
+    /**
+     * Insert variants in batches given a batchSize number
+     * @param batchOfVars
+     * @param batchOfParentVariantRef
+     * @param batchSize
+     * @return
+     */
+    private batchInsertStoredProcedure(List<Map> batchOfVars, List<String> batchOfParentVariantRef, int batchSize) {
+        String SP_VARIANT_INSERTION = '{CALL `mvar_core`.`Variant_Insertion`(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}'
+        // parameters of the above stored procedure
+        // <{IN var_chr CHAR(1)}>, <{IN var_position BIGINT(20)}>, <{IN var_alt CHAR(1)}>, <{IN var_ref CHAR(100)}>,
+        // <{IN var_type VARCHAR(255)}>, <{IN var_assembly VARCHAR(255)}>, <{IN var_parent_ref_ind BIT(1)}>,
+        // <{IN var_parent_variant_ref_txt VARCHAR(255)}>, <{IN var_variant_ref_txt VARCHAR(255)}>,
+        // <{IN gene_name VARCHAR(255)}>,
+        // <{IN transcript_reference_accession VARCHAR(255)}>, <{IN transcript_protein_change VARCHAR(255)}>, <{IN transcript_name VARCHAR(255)}>,
+        // <{IN identifier_external_src_id BIGINT(20)}>, <{IN identifier_external_id VARCHAR(255)}>, <{IN hgvs_ref_accession VARCHAR(255)}>, <{IN hgvs_description VARCHAR(255)}>,
+        // <{IN strain_name VARCHAR(255)}>, <{IN src_base_url VARCHAR(255)}>, <{IN src_name VARCHAR(255)}>, <{IN src_type VARCHAR(255)}>
         final Sql sql = getSql()
-        sql.withBatch(batchSize, INSERT_INTO_DB_VARIANT_CANONICAL_ID) { BatchingPreparedStatementWrapper ps ->
-
+        // load jannovar reference info
+        JannovarUtility.loadReference()
+        sql.withBatch(batchSize, SP_VARIANT_INSERTION) { BatchingPreparedStatementWrapper ps ->
             batchOfVars.eachWithIndex { variant, idx2 ->
-                if (found.find { it == variant.parentVariantRef }) {
-                    println(idx2 + " Existing record ID = " + variant.parentVariantRef)
-
-                } else {
-                    //println("indx = " + idx2 + ", " + variant)
-                    ps.addBatch([
-                            variant.chr,
-                            variant.pos,
-                            variant.ref,
-                            variant.alt,
-                            variant.parentVariantRef
-                    ])
-                }
+                // Get Info column (jannovar data)
+                String annotStr = variant.get("info").get("ANN")
+                InfoParser infoParser = new AnnotationParser("ANN=" + annotStr)
+                String refSeqAccession = JannovarUtility.getRefSeqAccessionId(Integer.parseInt(variant.chr))
+                ps.addBatch([
+                        variant.chr,
+                        variant.pos,
+                        variant.alt,
+                        variant.ref,
+                        variant.type,
+                        variant.assembly,
+                        variant.isParentVariant,
+                        variant.parentVariantRef,
+                        variant.variantRefTxt,              //
+                        infoParser.geneName,           // gene name
+                        refSeqAccession,                    // transcript reference accession
+                        '',                                 // transcript protein change
+                        infoParser.featureId,          // transcript name
+                        infoParser.geneId,            // identifier external id
+                        infoParser.hgvsC,              // hgvs reference accession
+                        infoParser.featureType,        // hgvs description
+                        variant.strain,                     // strain name
+                        '',                                 // src base url
+                        '',                                 // src name
+                        ''                                // src type
+                ])
             }
         }
-    }
 
+    }
 
     protected Sql getSql() {
         new Sql(getConnection())
@@ -340,7 +283,8 @@ class VcfFileUploadService {
                 //def jsp = new JsonSlurper()
                 Map<String, Object> variantOut = [:]
 
-
+                def info = vcfVariant.getInfo()
+                def strain = vcfVariant.getHeader().getSamples().get(0)
                 Map<String, String> variant = [:]
                 variant.put("ID", vcfVariant.getId())
                 variant.put("pos", vcfVariant.getPos())
@@ -349,6 +293,8 @@ class VcfFileUploadService {
                 variant.put("alt", vcfVariant.getAlt())
                 variant.put("type", vcfVariant.getType())
                 variant.assembly = assembly
+                variant.put("info", info)
+                variant.put("strain", strain)
 
 
                 ///holds full variation change for the parent reference <chr_pos_ref_alt>  -- ref and alt is empty will have '.' as value
