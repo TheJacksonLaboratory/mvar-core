@@ -5,7 +5,7 @@ class Gene {
     String name
     String chromosome
 
-    static hasMany = [indentifiers: Identifier, variants: Variant]
+    static hasMany = [identifiers: Identifier, variants: Variant]
 
     static constraints = {
     }
