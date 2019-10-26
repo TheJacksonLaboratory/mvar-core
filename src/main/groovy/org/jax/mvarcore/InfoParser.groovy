@@ -18,12 +18,6 @@ abstract class InfoParser {
         int startIdx = this.infoString.indexOf(idStr) + idStr.length()
         this.infoString = this.infoString.substring(startIdx)
         infoArray = this.infoString.split("\\|")
-        if (infoArray.length < getInfoLength()) {
-            throw new IllegalArgumentException("This INFO string doesn't have the expected number of attributes : is " + infoArray.length + "; should be " + getInfoLength())
-        } else {
-            print("Warning, the expected Info length is " + getInfoLength() + " and the input has length :" + infoArray.length)
-        }
-
     }
 
     /**
@@ -33,4 +27,5 @@ abstract class InfoParser {
     abstract String getInfoId()
 
     abstract int getInfoLength()
+
 }
