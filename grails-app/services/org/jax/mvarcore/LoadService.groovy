@@ -24,7 +24,7 @@ class LoadService {
     /**
      * public interface to start the strain data load
      */
-    public void loadMouseStrains(){
+    void loadMouseStrains(){
         println("*** STRAIN LOAD **")
         log.info("*** STRAIN LOAD **")
         List<Strain> strainList = loadMouseMineStrainData()
@@ -139,7 +139,7 @@ class LoadService {
     /**
      * public interface to start the gene data load
      */
-    public void loadMouseGenes(){
+    void loadMouseGenes(){
 
 
         println("*** GENE LOAD **")
