@@ -3,6 +3,7 @@ package org.jax.mvarcore
 class Strain {
 
     String name
+    String description
 
     static hasMany = [indentifiers : Identifier]
 

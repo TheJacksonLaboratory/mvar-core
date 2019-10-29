@@ -50,6 +50,7 @@ dependencies {
     compile "org.hibernate:hibernate-core:5.1.16.Final"
     compile "org.grails.plugins:views-json"
     compile "org.grails.plugins:views-json-templates"
+    compile "org.grails:grails-datastore-rest-client"
     compile 'de.charite.compbio:Jannovar:0.32'
     compile 'de.charite.compbio:jannovar-core:0.32'
     compile 'de.charite.compbio:jannovar-hgvs:0.32'
