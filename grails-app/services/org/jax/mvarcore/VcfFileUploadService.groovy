@@ -303,12 +303,12 @@ class VcfFileUploadService {
             it.variantRefTxt
         }
 
-        def cannonRecs = Variant.findAllByVariantRefTxtInList(batchOfParentVariantRefTxt)
+        def cannonRecs = Variant.findAllByVariantRefTxtInList(batchOfVariantRefTxt)
 //        def foundGeneRecs = Gene.findAllByName(batchOfGenes)
 //        List<String> geneFound = foundGeneRecs.collect {
 //            it.name
 //        }
-        def geneRecs = Gene.findByNameInList(batchOfGenes)
+        // def geneRecs = Gene.findByNameInList(batchOfVariantRefTxt)
 
         final Sql sql = getSql()
         sql.withBatch(batchSize, INSERT_INTO_DB_TRANSCRIPT) { BatchingPreparedStatementWrapper ps ->
