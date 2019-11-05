@@ -64,11 +64,6 @@ class VcfFileUploadService {
         String vcfFileName = vcfFile.getName()
         String assembly = vcfFileName.substring(0, vcfFileName.indexOf("_"))
 
-        /*temporary*/
-        Sql sql = getSql()
-        sql.execute("INSERT INTO gene (version, name, chromosome) VALUES (0, 'test_gene', 1)");
-        /*end temporary*/
-
         //persist data by chromosome -- TODO: check potential for multi-threaded process
         //TODO: add mouse chr to config
         List<String> mouseChromosomes = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19','X', 'Y', 'MT']
@@ -85,8 +80,8 @@ class VcfFileUploadService {
             insertCanonVariantsBatch(vcfVariants)
             // gene batch insert () : inserted through reference insertion at the beginning
             insertVariantsBatch(vcfVariants)
-            // insert transcripts
-            insertTranscriptsBatch(vcfVariants)
+            // TODO insert transcripts
+//            insertTranscriptsBatch(vcfVariants)
             //TODO Strain, gene, hgvs, external id associations, and jannovar data
 
 
@@ -181,11 +176,7 @@ class VcfFileUploadService {
         }
 
         def cannonRecs = VariantCanonIdentifier.findAllByVariantRefTxtInList(batchOfParentVariantRefTxt)
-//        def foundGeneRecs = Gene.findAllByName(batchOfGenes)
-//        List<String> geneFound = foundGeneRecs.collect {
-//            it.name
-//        }
-        def geneRecs = Gene.findByNameInList(batchOfGenes)
+        def geneRecs = Gene.findAllBySymbolInList(batchOfGenes)
 
         final Sql sql = getSql()
         sql.withBatch(batchSize, INSERT_INTO_DB_VARIANT) { BatchingPreparedStatementWrapper ps ->
@@ -195,7 +186,11 @@ class VcfFileUploadService {
                 } else {
                     //println("var = " + variant)
                     VariantCanonIdentifier canonIdentifier = cannonRecs.find { it.variantRefTxt == variant.parentVariantRef}
-                    Gene gene = geneRecs.find { it.name == variant.gene }
+                    Gene gene = geneRecs.find { gene -> gene.symbol == variant.gene }
+                    if (gene == null) {
+                        println('gene is null')
+                        // TODO why is it null? the mousemine query does not pull all genes for mus musculus? for instance C2cd6b
+                    }
                     ps.addBatch([
                             variant.chr,
                             variant.pos,
@@ -281,7 +276,7 @@ class VcfFileUploadService {
 
             if (idx > 1 && idx % batchSize == 0){
 
-                batchInsertVariants3(batchOfVars, batchOfVariantRefTxt)
+                batchInsertTranscripts(batchOfVars, batchOfVariantRefTxt)
                 //clear batch lists
                 batchOfVars.clear()
                 batchOfVariantRefTxt.clear()
