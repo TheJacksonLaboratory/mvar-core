@@ -7,7 +7,7 @@ package org.jax.mvarcore
 abstract class InfoParser {
 
     String infoString
-    String[] infoArray
+    List<String[]> listOfInfoArray
 
     InfoParser(String infoString) {
         this.infoString = infoString
@@ -17,7 +17,12 @@ abstract class InfoParser {
         String idStr = getInfoId() + "="
         int startIdx = this.infoString.indexOf(idStr) + idStr.length()
         this.infoString = this.infoString.substring(startIdx)
-        infoArray = this.infoString.split("\\|")
+        // split string by commas: a comma in the jannovar string separates multiple transcripts
+        String[] transcripts = this.infoString.split(",")
+        for (int i = 0; i < transcripts.size(); i++) {
+            String[] infoTmpArray = transcripts[i].split("\\|")
+            this.listOfInfoArray.add(infoTmpArray)
+        }
     }
 
     /**
