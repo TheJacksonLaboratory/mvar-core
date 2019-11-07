@@ -147,7 +147,7 @@ class VcfFileUploadService {
             batchOfVars.add(var)
             batchOfParentVariantRefTxt.add(var.parentVariantRef)
             batchOfVariantRefTxt.add(var.variantRefTxt)
-            batchOfGenes.add(var.gene)
+            batchOfGenes.add(var.gene[0])  // we get the first gene info in the jannovar info string
             if (idx > 1 && idx % batchSize == 0){
 
                 batchInsertVariants3(batchOfVars, batchOfVariantRefTxt, batchOfParentVariantRefTxt, batchOfGenes)
@@ -165,18 +165,19 @@ class VcfFileUploadService {
         }
     }
 
-    private batchInsertVariants3(List<Map> batchOfVars,  List<String> batchOfariantRefTxt, List<String> batchOfParentVariantRefTxt, List<String> batchOfGenes){
+    private batchInsertVariants3(List<Map> batchOfVars,  List<String> batchOfVariantRefTxt, List<String> batchOfParentVariantRefTxt, List<String> batchOfGenes){
         String INSERT_INTO_DB_VARIANT = 'insert into variant (version, chr, position, alt, ref, type, assembly, parent_ref_ind, parent_variant_ref_txt, variant_ref_txt, canon_var_identifier_id, gene_id) ' +
                 'VALUES (0, ?,?,?,?,?,?,?,?,?,?,?)' //  + SELECT_CANONICAL_ID + ')'
 
         int batchSize = 500
-        def foundRecs = Variant.findAllByVariantRefTxtInList(batchOfariantRefTxt)
+        def foundRecs = Variant.findAllByVariantRefTxtInList(batchOfVariantRefTxt)
         List<String> found = foundRecs.collect{
             it.variantRefTxt
         }
 
         def cannonRecs = VariantCanonIdentifier.findAllByVariantRefTxtInList(batchOfParentVariantRefTxt)
         def geneRecs = Gene.findAllBySymbolInList(batchOfGenes)
+        def foundGenes = geneRecs.collect{ it.symbol}
 
         final Sql sql = getSql()
         sql.withBatch(batchSize, INSERT_INTO_DB_VARIANT) { BatchingPreparedStatementWrapper ps ->
@@ -184,9 +185,9 @@ class VcfFileUploadService {
                 if (found.find { it == variant.variantRefTxt }) {
                     println(idx2 + " Existing record ID = " + variant.variantRefTxt)
                 } else {
-                    //println("var = " + variant)
                     VariantCanonIdentifier canonIdentifier = cannonRecs.find { it.variantRefTxt == variant.parentVariantRef}
-                    Gene gene = geneRecs.find { gene -> gene.symbol == variant.gene }
+                    String geneName = foundGenes.find { it == variant.gene[0]}
+                    Gene gene = geneRecs.find { it.symbol == variant.gene[0] } // we get the first gene info in the jannovar info string
                     if (gene == null) {
                         println('gene is null')
                         // TODO why is it null? the mousemine query does not pull all genes for mus musculus? for instance C2cd6b

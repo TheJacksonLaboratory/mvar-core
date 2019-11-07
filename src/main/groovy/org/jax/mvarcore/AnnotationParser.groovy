@@ -37,6 +37,7 @@ class AnnotationParser extends InfoParser {
 
     AnnotationParser(String infoString) {
         super(infoString)
+        initArrays(listOfInfoArray.size())
         for(int i = 0; i < listOfInfoArray.size(); i++) {
             allele[i] = listOfInfoArray.get(i)[0]
             annotation[i] = listOfInfoArray.get(i)[1]
@@ -58,6 +59,28 @@ class AnnotationParser extends InfoParser {
             distance[i] = listOfInfoArray.get(i).length > 17 ? listOfInfoArray.get(i)[17] : ""
             info[i] = listOfInfoArray.get(i).length > 18 ? listOfInfoArray.get(i)[18] : ""
         }
+    }
+
+    def initArrays(int size) {
+        allele = new String[size]
+        annotation = new String[size]
+        annotationImpact = new String[size]
+        geneName = new String[size]
+        geneId = new String[size]
+        featureType = new String[size]
+        featureId = new String[size]
+        transcriptBiotype = new String[size]
+        rank = new String[size]
+        hgvsC = new String[size]
+        hgvsP = new String[size]
+        cDNApos = new String[size]
+        cDNAlength = new String[size]
+        cdsPos = new String[size]
+        cdsLength = new String[size]
+        aaPos = new String[size]
+        aaLength = new String[size]
+        distance = new String[size]
+        info = new String[size]
     }
 
     @Override

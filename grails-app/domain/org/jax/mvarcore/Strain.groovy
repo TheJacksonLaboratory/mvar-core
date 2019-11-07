@@ -1,6 +1,6 @@
 package org.jax.mvarcore
 
-class Strain {
+class Strain implements IMouseMineObject {
 
     String identifier
     String name

@@ -19,6 +19,7 @@ abstract class InfoParser {
         this.infoString = this.infoString.substring(startIdx)
         // split string by commas: a comma in the jannovar string separates multiple transcripts
         String[] transcripts = this.infoString.split(",")
+        this.listOfInfoArray = new ArrayList<String[]>()
         for (int i = 0; i < transcripts.size(); i++) {
             String[] infoTmpArray = transcripts[i].split("\\|")
             this.listOfInfoArray.add(infoTmpArray)
