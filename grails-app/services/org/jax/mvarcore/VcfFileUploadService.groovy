@@ -174,10 +174,18 @@ class VcfFileUploadService {
         List<String> found = foundRecs.collect{
             it.variantRefTxt
         }
-
+        // records of all unique canon ids
         def cannonRecs = VariantCanonIdentifier.findAllByVariantRefTxtInList(batchOfParentVariantRefTxt)
-        def geneRecs = Gene.findAllBySymbolInList(batchOfGenes)
-        def foundGenes = geneRecs.collect{ it.symbol}
+        // records of all unique gene symbols
+        def geneSymbolRecs = Gene.findAllBySymbolInList(batchOfGenes)
+        // records of all unique gene synonyms
+        def geneSynonymRecs = Gene.createCriteria().list() {
+            or {
+                batchOfGenes.each { gene ->
+                    like("synonyms", "%${gene}%")
+                }
+            }
+        }
 
         final Sql sql = getSql()
         sql.withBatch(batchSize, INSERT_INTO_DB_VARIANT) { BatchingPreparedStatementWrapper ps ->
@@ -186,11 +194,10 @@ class VcfFileUploadService {
                     println(idx2 + " Existing record ID = " + variant.variantRefTxt)
                 } else {
                     VariantCanonIdentifier canonIdentifier = cannonRecs.find { it.variantRefTxt == variant.parentVariantRef}
-                    String geneName = foundGenes.find { it == variant.gene[0]}
-                    Gene gene = geneRecs.find { it.symbol == variant.gene[0] } // we get the first gene info in the jannovar info string
+                    Gene gene = geneSymbolRecs.find { it.symbol == variant.gene[0] } // we get the first gene info in the jannovar info string
                     if (gene == null) {
-                        println('gene is null')
-                        // TODO why is it null? the mousemine query does not pull all genes for mus musculus? for instance C2cd6b
+                        // We check in the list of synonyms to get the corresponding gene
+                        gene = geneSynonymRecs.find { it.synonyms.contains(variant.gene[0]) }
                     }
                     ps.addBatch([
                             variant.chr,
