@@ -2,24 +2,29 @@ package org.jax.mvarcore
 
 import gngs.VCF
 import grails.gorm.transactions.Transactional
-import groovy.sql.BatchingPreparedStatementWrapper
 import groovy.sql.Sql
 import org.apache.commons.lang.time.StopWatch
 import org.hibernate.internal.SessionImpl
+
 import org.springframework.dao.InvalidDataAccessApiUsageException
 
 import org.jax.mvarcore.jannovar.JannovarUtility
 
 import java.sql.Connection
+import java.sql.PreparedStatement
+import java.sql.ResultSet
+import java.sql.Statement
+import java.sql.Types
 
 
 @Transactional
 class VcfFileUploadService {
 
     def sessionFactory
+    LoadService loadService
+    Map<String, List<String>> newTranscriptsMap
 
-
-    public void loadVCF(File vcfFile){
+    void loadVCF(File vcfFile) {
 
         StopWatch stopWatch = new StopWatch()
         stopWatch.start()
@@ -28,7 +33,7 @@ class VcfFileUploadService {
         String vcfFileName = vcfFile.getName()
         String assembly = vcfFileName.substring(0, vcfFileName.indexOf("_"))
 
-        if (! isAcceptedAssembly(assembly.toLowerCase())){
+        if (!isAcceptedAssembly(assembly.toLowerCase())) {
             //Invalid file name. Expecting assembly as the first part of the file name
             return
         }
@@ -36,7 +41,7 @@ class VcfFileUploadService {
         println("vcf File: " + vcfFileName)
         try {
             persistData(vcfFile)
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace()
         }
 
@@ -59,16 +64,18 @@ class VcfFileUploadService {
      * @param vcfFile
      * @return
      */
-    private persistData (File vcfFile){
+    private persistData(File vcfFile) {
 
         String vcfFileName = vcfFile.getName()
         String assembly = vcfFileName.substring(0, vcfFileName.indexOf("_"))
 
         //persist data by chromosome -- TODO: check potential for multi-threaded process
         //TODO: add mouse chr to config
-        List<String> mouseChromosomes = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19','X', 'Y', 'MT']
+        List<String> mouseChromosomes = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', 'X', 'Y', 'MT']
 
-        mouseChromosomes.each {chr ->
+        // Map used to collect non-existing transcripts in DB
+        newTranscriptsMap = new HashMap<String, List<String>>()
+        mouseChromosomes.each { chr ->
 
             StopWatch stopWatch = new StopWatch()
             stopWatch.start()
@@ -76,25 +83,18 @@ class VcfFileUploadService {
             List<Map> vcfVariants = parseVcf(chr, vcfFile, assembly)
             println("CHR = " + chr + ', variant size= ' + vcfVariants.size())
 
-            ///batch inserts:
+            //insert canonicals
             insertCanonVariantsBatch(vcfVariants)
-            // gene batch insert () : inserted through reference insertion at the beginning
+            //insert variants, transcript, hgvs and relationships, and collect new transcripts not in DB
             insertVariantsBatch(vcfVariants)
-            // TODO insert transcripts
-//            insertTranscriptsBatch(vcfVariants)
-            //TODO Strain, gene, hgvs, external id associations, and jannovar data
-
 
             println("Chr= " + chr + " : persistance load = ${stopWatch} time: ${new Date()}")
             stopWatch.reset()
             stopWatch.start()
 
         }
-
-    }
-
-    private void insertExternalIdentifiers(Map varIn){
-
+        // add new Transcripts to DB
+        loadService.loadNewTranscripts(newTranscriptsMap)
 
     }
 
@@ -137,87 +137,12 @@ class VcfFileUploadService {
 //
 //    }
 
-    private insertVariantsBatch(List<Map> varList){
-        List<Map> batchOfVars = []
-        List<String> batchOfParentVariantRefTxt = []
-        List<String> batchOfVariantRefTxt = []
-        List<String> batchOfGenes = []
-        int batchSize = 500
-        varList.eachWithIndex { var, idx ->
-            batchOfVars.add(var)
-            batchOfParentVariantRefTxt.add(var.parentVariantRef)
-            batchOfVariantRefTxt.add(var.variantRefTxt)
-            batchOfGenes.add(var.gene[0])  // we get the first gene info in the jannovar info string
-            if (idx > 1 && idx % batchSize == 0){
-
-                batchInsertVariants3(batchOfVars, batchOfVariantRefTxt, batchOfParentVariantRefTxt, batchOfGenes)
-                //clear batch lists
-                batchOfVars.clear()
-                batchOfParentVariantRefTxt.clear()
-                batchOfVariantRefTxt.clear()
-                batchOfGenes.clear()
-                cleanUpGorm()
-            }
-        }
-        //last batch
-        if (batchOfVars.size() > 0){
-            batchInsertVariants3(batchOfVars, batchOfVariantRefTxt, batchOfParentVariantRefTxt, batchOfGenes)
-        }
-    }
-
-    private batchInsertVariants3(List<Map> batchOfVars,  List<String> batchOfVariantRefTxt, List<String> batchOfParentVariantRefTxt, List<String> batchOfGenes){
-        String INSERT_INTO_DB_VARIANT = 'insert into variant (version, chr, position, alt, ref, type, assembly, parent_ref_ind, parent_variant_ref_txt, variant_ref_txt, canon_var_identifier_id, gene_id) ' +
-                'VALUES (0, ?,?,?,?,?,?,?,?,?,?,?)' //  + SELECT_CANONICAL_ID + ')'
-
-        int batchSize = 500
-        def foundRecs = Variant.findAllByVariantRefTxtInList(batchOfVariantRefTxt)
-        List<String> found = foundRecs.collect{
-            it.variantRefTxt
-        }
-        // records of all unique canon ids
-        def cannonRecs = VariantCanonIdentifier.findAllByVariantRefTxtInList(batchOfParentVariantRefTxt)
-        // records of all unique gene symbols
-        def geneSymbolRecs = Gene.findAllBySymbolInList(batchOfGenes)
-        // records of all unique gene synonyms
-        def geneSynonymRecs = Gene.createCriteria().list() {
-            or {
-                batchOfGenes.each { gene ->
-                    like("synonyms", "%${gene}%")
-                }
-            }
-        }
-
-        final Sql sql = getSql()
-        sql.withBatch(batchSize, INSERT_INTO_DB_VARIANT) { BatchingPreparedStatementWrapper ps ->
-            batchOfVars.eachWithIndex { variant, idx2 ->
-                if (found.find { it == variant.variantRefTxt }) {
-                    println(idx2 + " Existing record ID = " + variant.variantRefTxt)
-                } else {
-                    VariantCanonIdentifier canonIdentifier = cannonRecs.find { it.variantRefTxt == variant.parentVariantRef}
-                    Gene gene = geneSymbolRecs.find { it.symbol == variant.gene[0] } // we get the first gene info in the jannovar info string
-                    if (gene == null) {
-                        // We check in the list of synonyms to get the corresponding gene
-                        gene = geneSynonymRecs.find { it.synonyms.contains(variant.gene[0]) }
-                    }
-                    ps.addBatch([
-                            variant.chr,
-                            variant.pos,
-                            variant.alt,
-                            variant.ref,
-                            variant.type,
-                            variant.assembly,
-                            variant.isParentVariant,
-                            variant.parentVariantRef,
-                            variant.variantRefTxt,
-                            canonIdentifier.id,
-                            gene.id
-                    ])
-                }
-            }
-        }
-    }
-
-    private insertCanonVariantsBatch(List<Map> varList){
+    /**
+     * Insert Canonicals in batch
+     * @param varList
+     * @return
+     */
+    private insertCanonVariantsBatch(List<Map> varList) {
         String UPDATE_CANONICAL_ID = 'update variant_canon_identifier set caid = concat(\'MCA_\', lpad(id, 14, 0)) where caid is NULL'
 
         List<Map> batchOfVars = []
@@ -226,9 +151,9 @@ class VcfFileUploadService {
 
         varList.eachWithIndex { var, idx ->
             batchOfVars.add(var)
-            batchOfParentVariantRef.add(var.parentVariantRef)
-            if (idx > 1 && idx % batchSize == 0){
-                batchInsertCannonVariants(batchOfVars, batchOfParentVariantRef)
+            batchOfParentVariantRef.add((String)var.parentVariantRef)
+            if (idx > 1 && idx % batchSize == 0) {
+                batchInsertCannonVariantsJDBC(batchOfVars, batchOfParentVariantRef)
                 //clear batch lists
                 batchOfVars.clear()
                 batchOfParentVariantRef.clear()
@@ -237,8 +162,11 @@ class VcfFileUploadService {
         }
 
         //last batch
-        if (batchOfVars.size() > 0){
-            batchInsertCannonVariants(batchOfVars, batchOfParentVariantRef)
+        if (batchOfVars.size() > 0) {
+            batchInsertCannonVariantsJDBC(batchOfVars, batchOfParentVariantRef)
+            batchOfVars.clear()
+            batchOfParentVariantRef.clear()
+            cleanUpGorm()
         }
 
         // update canonical id
@@ -247,87 +175,216 @@ class VcfFileUploadService {
         //sql.commit()
     }
 
+    /**
+     * Insert Canonicals using JDBC
+     * @param batchOfVars
+     * @param batchOfParentVariantRef
+     * @return
+     */
+    private batchInsertCannonVariantsJDBC(List<Map> batchOfVars, List<String> batchOfParentVariantRef) {
+        // insert canon variant
+        PreparedStatement insertCanonVariants = connection.prepareStatement("insert into variant_canon_identifier (version, chr, position, ref, alt, variant_ref_txt) VALUES (0,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS)
 
-    protected batchInsertCannonVariants(List<Map> batchOfVars,  List<String> batchOfParentVariantRef){
-        String INSERT_INTO_DB_VARIANT_CANONICAL_ID = 'insert into variant_canon_identifier (version, chr, position, ref, alt, variant_ref_txt) VALUES (0, ?, ?, ?, ?, ?)'
-        int batchSize = 500
         def foundRecs = VariantCanonIdentifier.findAllByVariantRefTxtInList(batchOfParentVariantRef)
-        List<String> found = foundRecs.collect{
+        List<String> found = foundRecs.collect {
             it.variantRefTxt
         }
-        final Sql sql = getSql()
-        sql.withBatch(batchSize, INSERT_INTO_DB_VARIANT_CANONICAL_ID) { BatchingPreparedStatementWrapper ps ->
-            batchOfVars.eachWithIndex { variant, idx2 ->
-                if (found.find { it == variant.parentVariantRef }) {
-                    println(idx2 + " Existing record ID = " + variant.parentVariantRef)
-                } else {
-                    //println("indx = " + idx2 + ", " + variant)
-                    ps.addBatch([
-                            variant.chr,
-                            variant.pos,
-                            variant.ref,
-                            variant.alt,
-                            variant.parentVariantRef
-                    ])
-                }
+
+        batchOfVars.eachWithIndex { variant, idx2 ->
+            if (found.find { it == variant.parentVariantRef }) {
+                println(idx2 + " Existing record ID = " + variant.parentVariantRef)
+            } else {
+                insertCanonVariants.setString(1, (String) variant.chr)
+                insertCanonVariants.setInt(2, (Integer) variant.pos)
+                insertCanonVariants.setString(3, (String) variant.ref)
+                insertCanonVariants.setString(4, (String) variant.alt)
+                insertCanonVariants.setString(5, (String) variant.parentVariantRef)
+                insertCanonVariants.addBatch()
             }
         }
+        insertCanonVariants.executeBatch()
+
     }
 
-    private insertTranscriptsBatch(List<Map> varList){
+    /**
+     * Insert Variants, variants relationship (transcripts, strain) in batch
+     * @param varList
+     */
+    private void insertVariantsBatch(List<Map> varList) {
         List<Map> batchOfVars = []
+        List<String> batchOfParentVariantRefTxt = []
         List<String> batchOfVariantRefTxt = []
-        int batchSize = 500
+        List<String> batchOfGenes = []
+        List<String> batchOfTranscripts = []
+        def batchSize = 1000
+        List<Strain> strainList = varList.size() > 0 ? Strain.createCriteria().list {
+            like 'name', (varList.get(0).strain) + '%'
+        } : new ArrayList<Strain>()
+
         varList.eachWithIndex { var, idx ->
             batchOfVars.add(var)
-            batchOfVariantRefTxt.add(var.variantRefTxt)
+            batchOfParentVariantRefTxt.add((String) var.parentVariantRef)
+            batchOfVariantRefTxt.add((String) var.variantRefTxt)
 
-            if (idx > 1 && idx % batchSize == 0){
+            batchOfGenes.add((String) var.info_gene[0])
+            batchOfTranscripts.add(((String) var.info_transcript_name[0]).split('\\.')[0])
 
-                batchInsertTranscripts(batchOfVars, batchOfVariantRefTxt)
+            if (idx > 1 && idx % batchSize == 0) {
+                batchInsertVariantsJDBC(batchOfVars, batchOfVariantRefTxt, batchOfParentVariantRefTxt, batchOfGenes, batchOfTranscripts, strainList)
                 //clear batch lists
                 batchOfVars.clear()
+                batchOfParentVariantRefTxt.clear()
                 batchOfVariantRefTxt.clear()
+                batchOfGenes.clear()
+                batchOfTranscripts.clear()
                 cleanUpGorm()
             }
         }
         //last batch
-        if (batchOfVars.size() > 0){
-            batchInsertTranscripts(batchOfVars, batchOfVariantRefTxt)
+        if (batchOfVars.size() > 0) {
+            batchInsertVariantsJDBC(batchOfVars, batchOfVariantRefTxt, batchOfParentVariantRefTxt, batchOfGenes, batchOfTranscripts, strainList)
+            batchOfVars.clear()
+            batchOfParentVariantRefTxt.clear()
+            batchOfVariantRefTxt.clear()
+            batchOfGenes.clear()
+            batchOfTranscripts.clear()
+            cleanUpGorm()
         }
     }
 
-    private batchInsertTranscripts(List<Map> batchOfVars, List<String> batchOfVariantRefTxt){
-        String INSERT_INTO_DB_TRANSCRIPT = 'insert into transcript (version, reference_accession, protein_change, name, variant_id) VALUES (0, ?, ?, ?, ?)';
+    /**
+     * Insert variants, and relationships using JDBC
+     * @param batchOfVars
+     * @param batchOfVariantRefTxt
+     * @param batchOfParentVariantRefTxt
+     * @param batchOfGenes
+     * @param batchOfTranscripts
+     * @param strainList
+     */
+    private void batchInsertVariantsJDBC(List<Map> batchOfVars, List<String> batchOfVariantRefTxt, List<String> batchOfParentVariantRefTxt, List<String> batchOfGenes, List<String> batchOfTranscripts, List<Strain> strainList) {
 
-        int batchSize = 500
         def foundRecs = Variant.findAllByVariantRefTxtInList(batchOfVariantRefTxt)
-        List<Integer> found = foundRecs.collect{
+        List<String> found = foundRecs.collect {
             it.variantRefTxt
         }
 
-        def cannonRecs = Variant.findAllByVariantRefTxtInList(batchOfVariantRefTxt)
-//        def foundGeneRecs = Gene.findAllByName(batchOfGenes)
-//        List<String> geneFound = foundGeneRecs.collect {
-//            it.name
-//        }
-        // def geneRecs = Gene.findByNameInList(batchOfVariantRefTxt)
+        // records of all unique canon ids
+        def cannonRecs = VariantCanonIdentifier.findAllByVariantRefTxtInList(batchOfParentVariantRefTxt)
+        // records of all unique gene symbols
+        def geneSymbolRecs = Gene.findAllBySymbolInList(batchOfGenes)
+        def geneSynonymRecs = Synonym.findAllByNameInList(batchOfGenes)
 
-        final Sql sql = getSql()
-        sql.withBatch(batchSize, INSERT_INTO_DB_TRANSCRIPT) { BatchingPreparedStatementWrapper ps ->
-            batchOfVars.eachWithIndex { variant, idx2 ->
-                //println("var = " + variant)
-                Variant variantIdentifier = found.find { foundRecs.variantRefTxt == variant.variantRefTxt}
-                ps.addBatch([
-                        variant.transcript_ref_access,
-                        '',                                 // protein change
-                        variant.transcript_name,
-                        variantIdentifier.id
-                ])
+        // directly use java PreparedStatement to get ResultSet with keys
+        PreparedStatement insertVariants = connection.prepareStatement("insert into variant (chr, position, alt, ref, type, assembly, parent_ref_ind, parent_variant_ref_txt, variant_ref_txt, dna_hgvs_notation, protein_hgvs_notation, canon_var_identifier_id, gene_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS)
+        batchOfVars.eachWithIndex { variant, idx2 ->
+            if (found.find { it == variant.variantRefTxt }) {
+                println(idx2 + " Existing record ID = " + variant.variantRefTxt)
+            } else {
+                VariantCanonIdentifier canonIdentifier = cannonRecs.find {
+                    it.variantRefTxt == variant.parentVariantRef
+                }
+                // Do we want that? to link only the most pathogenic gene info to this variant? or do we have a one to many relationship?
+                Gene gene = geneSymbolRecs.find { it.symbol == variant.info_gene[0] }
+                // we get the first gene info in the jannovar info string
+                if (gene == null) {
+                    // We check in the list of synonyms to get the corresponding gene
+                    gene = getGeneBySynonyms(geneSynonymRecs, (String) variant.info_gene[0])
+                }
+                def geneId = gene != null ? gene.id : null
+
+                insertVariants.setString(1, (String) variant.chr)
+                insertVariants.setInt(2, (Integer) variant.pos)
+                insertVariants.setString(3, (String) variant.alt)
+                insertVariants.setString(4, (String) variant.ref)
+                insertVariants.setString(5, (String) variant.type)
+                insertVariants.setString(6, (String) variant.assembly)
+                insertVariants.setBoolean(7, (Boolean) variant.isParentVariant)
+                insertVariants.setString(8, (String) variant.parentVariantRef)
+                insertVariants.setString(9, (String) variant.variantRefTxt)
+                insertVariants.setString(10, (String) variant.info_hgvs_dna[0])
+                insertVariants.setString(11, (String) variant.info_hgvs_protein[0])
+                insertVariants.setLong(12, canonIdentifier.id)
+                if (geneId == null)
+                    insertVariants.setNull(13, Types.BIGINT)
+                else
+                    insertVariants.setLong(13, geneId)
+                insertVariants.addBatch()
+
             }
         }
+        insertVariants.executeBatch()
+        ResultSet variantKeys = insertVariants.getGeneratedKeys()
+
+        def transcriptsRecs = Transcript.findAllByPrimaryIdentifierInList(batchOfTranscripts)
+
+        // insert Transcript
+        PreparedStatement insertTranscripts = connection.prepareStatement("insert into transcript (primary_identifier, length, chromosome, location_start, location_end, gene_identifier) VALUES (?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS)
+        PreparedStatement insertVariantsByStrain = connection.prepareStatement("insert into variant_strain (variant_strains_id, strain_id) VALUES (?, ?)")
+        PreparedStatement insertVariantsByTranscript = connection.prepareStatement("insert into variant_transcript (variant_transcripts_id, transcript_id, most_pathogenic) VALUES (?, ?, ?)")
+
+        batchOfVars.eachWithIndex { variant, idx2 ->
+
+            if (found.find { it == variant.variantRefTxt }) {
+                println(idx2 + " Existing record ID = " + variant.variantRefTxt)
+            } else {
+                // add transcripts
+                variantKeys.next()
+                Long variantKey = variantKeys.getLong(1)
+                for (int i = 0; i < variant.info_transcript_name.size(); i++) {
+                    String transcriptId = ((String) variant.info_transcript_name[i]).split('\\.')[0]
+                    // check if transcript already exists, if not we create it
+                    Transcript transcript
+                    if (i == 0) {
+                        transcript = transcriptsRecs.find { it.primaryIdentifier == transcriptId }
+                    } else {
+                        transcript = Transcript.createCriteria().get {
+                            eq('primaryIdentifier', transcriptId)
+                        } as Transcript
+                    }
+
+                    if (transcript == null) {
+                        Gene gene = geneSymbolRecs.find { it.symbol == variant.info_gene[i] }
+                        // we get the first gene info in the jannovar info string
+                        if (gene == null) {
+                            // We check in the list of synonyms to get the corresponding gene
+                            gene = getGeneBySynonyms(geneSynonymRecs, (String) variant.info_gene[i])
+                        }
+                        if (!newTranscriptsMap.containsKey(transcriptId))
+                            newTranscriptsMap.put(transcriptId, [gene != null ? gene.mgiId : '', String.valueOf(variantKey)] )
+                    } else {
+                        // we add the transcript / variant relationship
+                        insertVariantsByTranscript.setLong(1, variantKey)
+                        insertVariantsByTranscript.setLong(2, transcript.id)
+                        insertVariantsByTranscript.setBoolean(3, i == 0)
+                        insertVariantsByTranscript.addBatch()
+                    }
+
+                }
+                // add variants by strain
+                for (strain in strainList) {
+                    insertVariantsByStrain.setLong(1, variantKey)
+                    insertVariantsByStrain.setLong(2, strain.id)
+                    insertVariantsByStrain.addBatch()
+                }
+            }
+        }
+        insertTranscripts.executeBatch()
+        insertVariantsByStrain.executeBatch()
+
     }
 
+    private getGeneBySynonyms(List<Synonym> geneSynonymRecs, String geneName) {
+        Gene gene = null
+        Synonym syn = geneSynonymRecs.find { it.name == geneName }
+        if (syn != null) {
+            gene = Gene.createCriteria().get {
+                synonyms {
+                    eq('id', syn.id)
+                }
+            } as Gene
+        }
+        return gene
+    }
 
     protected Sql getSql() {
         new Sql(getConnection())
@@ -349,7 +406,7 @@ class VcfFileUploadService {
     }
 
 
-    private boolean isAcceptedAssembly(String inAssembly){
+    private boolean isAcceptedAssembly(String inAssembly) {
 
         //TODO define configuration for accepted assemblies
         List<String> assemblies = ['grcm38', 'ncbi37', 'ncbi36']
@@ -359,7 +416,7 @@ class VcfFileUploadService {
             return false
     }
 
-    private boolean isRefAssembly(String inAssembly){
+    private boolean isRefAssembly(String inAssembly) {
 
         //TODO define configuration for reference assembly
         String refAssembly = 'grcm38'
@@ -383,11 +440,21 @@ class VcfFileUploadService {
         try {
 
             //vcfFileInputStream.line
-            def vcf = VCF.parse(vcfFile.getPath()){v->
+            def vcf = VCF.parse(vcfFile.getPath()) { v ->
 
                 v.chr == 'chr' + chromosome || v.chr == chromosome
             }
+
             println("parsed variants = " + vcf.getVariants().size())
+            // get strain name from last header column
+            def strain = ''
+            if (vcf.getVariants()[0] != null) {
+                def header = vcf.getVariants()[0].getHeader().lastHeaderLine
+                if (header.size() > 9) {
+                    strain = header[9]
+                }
+            }
+
             vcf.getVariants().each { vcfVariant ->
 
                 // Get Info column (jannovar data)
@@ -398,10 +465,9 @@ class VcfFileUploadService {
                 //def jsp = new JsonSlurper()
                 Map<String, Object> variantOut = [:]
 
-                String chromosomeRead = vcfVariant.getChr().replace('ch','').replace('r','')
-                String refSeqAccession = JannovarUtility.getRefSeqAccessionId(Integer.parseInt(chromosomeRead))
+                String chromosomeRead = vcfVariant.getChr().replace('ch', '').replace('r', '')
 
-                Map<String, String> variant = [:]
+                Map<String, Object> variant = [:]
                 variant.put("ID", vcfVariant.getId())
                 variant.put("pos", vcfVariant.getPos())
                 variant.put("chr", chromosomeRead)
@@ -409,10 +475,22 @@ class VcfFileUploadService {
                 variant.put("alt", vcfVariant.getAlt())
                 variant.put("type", vcfVariant.getType())
                 variant.assembly = assembly
-                variant.put("gene", infoParser.geneName)
-                variant.put("transcript_name", infoParser.featureId)
-                variant.put("transcript_ref_access", refSeqAccession)
+                variant.put("info_gene", infoParser.geneName)
+                variant.put("info_transcript_name", infoParser.featureId)
+                variant.put("info_transcript_biotype", infoParser.transcriptBiotype)
+                variant.put("info_hgvs_dna", infoParser.hgvsC)
+                variant.put("info_hgvs_protein", infoParser.hgvsP)
+                variant.put("strain", strain)
 
+                if (chromosomeRead == 'X') {
+                    chromosomeRead = '20'
+                }
+                if (chromosomeRead == 'Y') {
+                    chromosomeRead = '21'
+                }
+                String refSeqAccession = JannovarUtility.getRefSeqAccessionId(Integer.parseInt(chromosomeRead))
+
+                variant.put("transcript_ref_access", refSeqAccession)
 
                 ///holds full variation change for the parent reference <chr_pos_ref_alt>  -- ref and alt is empty will have '.' as value
                 String refIn = variant.ref ?: '.'
@@ -426,18 +504,17 @@ class VcfFileUploadService {
 
                     variant.pos = vcfVariant.getInfo().OriginalStart
                     variant.isParentVariant = false
-                }else if(refAssembly) {
+                } else if (refAssembly) {
 
                     variant.isParentVariant = true
-                }else{
+                } else {
                     //something is wrong. Either
                     //-liftover variants should have original position  OR
                     //-refAssembly should be GRCm38
                     throw new InvalidDataAccessApiUsageException("Expects GRCm38 file or liftover to GRCm38")
-                    return
                 }
 
-                if (! vcfVariant.getInfo().OriginalAlleles){
+                if (!vcfVariant.getInfo().OriginalAlleles) {
                     // if original alleles properties are missed in liftover then they are the same
                     //TODO check and assign values when original alleles are different in liftover variant
                     variant.put("ref", vcfVariant.getRef())
@@ -452,7 +529,7 @@ class VcfFileUploadService {
                 variantList.add(variant)
 
             }
-        }catch (Exception e){
+        } catch (Exception e) {
 
             String error = "Error reading the VCF file " + e.getMessage()
             println(error)

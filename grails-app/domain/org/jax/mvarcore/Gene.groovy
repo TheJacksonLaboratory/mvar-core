@@ -1,10 +1,9 @@
 package org.jax.mvarcore
 
-class Gene implements IMouseMineObject {
+class Gene {
 
     String mgiId
     String symbol
-    String synonyms
     String name
     String description
     String chr
@@ -13,20 +12,18 @@ class Gene implements IMouseMineObject {
     String ensemblGeneId
 
     static constraints = {
-
         entrezGeneId nullable: true
         ensemblGeneId nullable:  true
         description nullable: true, sqlType: 'text'
-        synonyms nullable: true, sqlType: 'text'
+        name nullable: true, sqlType: 'text'
         type nullable: true
     }
 
     static mapping = {
+        mgiId index: 'mgi_id_idx'
         symbol index:'symbol_idx'
-        synonyms index:'synonyms_idx'
-
     }
 
-    static hasMany = [identifiers: Identifier, variants: Variant]
+    static hasMany = [variants: Variant, synonyms: Synonym, transcripts: Transcript]
 
 }

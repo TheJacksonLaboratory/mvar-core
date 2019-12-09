@@ -3,13 +3,25 @@ package org.jax.mvarcore
 
 class Transcript {
 
-    String name
-    String referenceAccession
-    String proteinChange
+    String primaryIdentifier
+    int length
+    String chromosome
+    Long locationStart
+    Long locationEnd
+    String geneIdentifier
 
-    static hasMany = [hgvs: Hgvs, proteinEffectHgvs: Hgvs]
-    //static mappedBy = [hgvs: "codingDnaRefSeqHgvs", proteinEffect: 'proteinRefSeqHgvs']
-    static belongsTo = [variant: Variant]
+    static mapping = {
+        primaryIdentifier index: true
+        geneIdentifier index: true
+        version false
+    }
+
     static constraints = {
+        primaryIdentifier nullable: false
+        length nullable: false
+        chromosome nullable: false
+        locationStart nullable: false
+        locationEnd nullable: false
+        geneIdentifier nullable: true
     }
 }
