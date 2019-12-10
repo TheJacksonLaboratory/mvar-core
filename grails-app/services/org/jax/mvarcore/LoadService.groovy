@@ -48,7 +48,7 @@ class LoadService {
             loadMouseStrains()
         }
         // we need to have transcripts inserted before as well as genes
-        if (Transcript.count() > 0 && Gene.count() > 0) {
+        if (Transcript.count() > 0 && Gene.count() > 0 && tableHasValues('gene_transcript')) {
             saveGeneTranscriptsRelationships()
         }
         updateVariantTranscriptTable()
@@ -185,6 +185,15 @@ class LoadService {
             }
         }
         return false
+    }
+
+    private boolean tableHasValues(String tableName) {
+        Statement stmt = connection.createStatement()
+        ResultSet rs = stmt.executeQuery("select * FROM ${tableName}")
+        if (!rs.next()) {
+            return false
+        }
+        return true
     }
 
     /**
