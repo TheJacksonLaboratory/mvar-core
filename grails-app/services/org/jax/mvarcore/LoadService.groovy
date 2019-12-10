@@ -3,8 +3,7 @@ package org.jax.mvarcore
 import grails.gorm.transactions.Transactional
 import grails.plugins.rest.client.RestBuilder
 import grails.plugins.rest.client.RestResponse
-import groovy.json.JsonParserType
-import groovy.json.JsonSlurper
+
 import org.grails.datastore.gorm.GormEntity
 import org.grails.io.support.ClassPathResource
 import org.grails.web.json.JSONArray
@@ -13,6 +12,9 @@ import org.hibernate.internal.SessionImpl
 
 import java.sql.Connection
 import java.sql.PreparedStatement
+import java.sql.ResultSet
+import java.sql.ResultSetMetaData
+import java.sql.Statement
 
 
 @Transactional
@@ -24,6 +26,7 @@ class LoadService {
     private final String MM_URL = 'http://www.mousemine.org/mousemine/service/query/results'
     private final String ENSEMBL_URL = 'http://rest.ensembl.org/'
 
+    // Unused fields
     private final static USE_FILE = false
     File geneFeedFile = new ClassPathResource('results_gene.json').file
     File strainFeedFile = new ClassPathResource('results_strain.json').file
@@ -33,16 +36,22 @@ class LoadService {
 
     }
 
+    /**
+     * Load Gene, Strains and Transcript/gene relationships
+     */
     void loadData() {
-        if (Gene.count() <= 0) {
+        // We need to have alleles inserted first before Strains and genes
+        if (Gene.count() <= 0 && Allele.count() > 0) {
             loadMouseGenes()
         }
-
-        if (Strain.count() <= 0) {
+        if (Strain.count() <= 0 && Allele.count() > 0) {
             loadMouseStrains()
         }
-
-        //saveGeneTranscriptsRelationships()
+        // we need to have transcripts inserted before as well as genes
+        if (Transcript.count() > 0 && Gene.count() > 0) {
+            saveGeneTranscriptsRelationships()
+        }
+        updateVariantTranscriptTable()
     }
 
     /**
@@ -57,7 +66,7 @@ class LoadService {
         String strainQuery = '<query name="" model="genomic" view="Strain.primaryIdentifier Strain.name Strain.attributeString Strain.carries.symbol Strain.carries.name Strain.carries.primaryIdentifier Strain.carries.alleleType" longDescription="Returns the strains that carry the specified allele(s)." sortOrder="Strain.primaryIdentifier asc"><constraint path="Strain.carries.organism.taxonId" op="=" value="10090"/></query>'
         String url = "${MM_URL}"
         String fullQuery = url + '?query=' + strainQuery + '&format=jsonobjects'
-        List<Strain> strainList = loadData(fullQuery, 'strain')
+        def strainList = loadData(fullQuery, 'strain')
         saveObjects(strainList, 1000)
     }
 
@@ -71,7 +80,7 @@ class LoadService {
         String geneQuery = '<query name="" model="genomic" view="Gene.primaryIdentifier Gene.symbol Gene.name Gene.description Gene.mgiType Gene.chromosome.symbol Gene.synonyms.value Gene.crossReferences.identifier" longDescription="" sortOrder="Gene.symbol asc" constraintLogic="A and (B or C)"><constraint path="Gene.organism.species" code="A" op="=" value="musculus"/><constraint path="Gene.crossReferences.source.name" code="B" op="=" value="Ensembl Gene Model"/><constraint path="Gene.crossReferences.source.name" code="C" op="=" value="Entrez Gene"/></query>'
         String url = "${MM_URL}"
         String fullQuery = url + '?query=' + geneQuery + '&format=jsonobjects'
-        List<Gene> geneList = loadData(fullQuery, 'gene')
+        def geneList = loadData(fullQuery, 'gene')
         saveObjects(geneList, 1000)
     }
 
@@ -86,7 +95,7 @@ class LoadService {
         String lookupQuery = 'lookup/id/'
         String url = "${ENSEMBL_URL}"
         RestBuilder rest = new RestBuilder()
-        List<Transcript> transcriptList = []
+        def transcriptList = []
         ids.each { key, val ->
             Transcript transcript = loadNewTranscript(rest, url + lookupQuery, key, val)
             if (transcript)
@@ -96,6 +105,15 @@ class LoadService {
         saveObjects(transcriptList, transcriptList.size())
     }
 
+    /**
+     * Load new transcript in DB given the transcript id. Using a RestBuilder, we connect to the
+     * Ensembl RESTAPI to retrieve the info if it exists.
+     * @param rest
+     * @param url
+     * @param id
+     * @param geneAndVariantIds
+     * @return
+     */
     private Transcript loadNewTranscript(RestBuilder rest, String url, String id, List<String> geneAndVariantIds) {
         String fullQuery = url + id + '?content-type=application/json;expand=1'
         RestResponse resp = rest.get(fullQuery)
@@ -112,12 +130,13 @@ class LoadService {
             log.error("Response to mouse mine data request: " + resp.statusCode.value() + " restResponse.text= " + resp.text)
             return null
         }
-        int start = jsonResult.get('start')
-        int end = jsonResult.get('end')
-        int length = (end - start) + 1
+        int start = jsonResult.get('start') as int
+        int end = jsonResult.get('end') as int
+        // TODO find how to get base pair length
+//        int length = (end - start) + 1
         Transcript transcript = new Transcript(
                 primaryIdentifier: id,
-                length: length,
+//                length: length,
                 chromosome: jsonResult.get('seq_region_name'),
                 locationStart: start,
                 locationEnd: end,
@@ -144,6 +163,30 @@ class LoadService {
         return transcript
     }
 
+    private updateVariantTranscriptTable() {
+        // if the column does not exist we create it
+        def columnName = 'most_pathogenic'
+        def tableName = 'variant_transcript'
+        if (!columnExists(columnName, tableName)) {
+            Statement updateTableStmt = connection.createStatement()
+            ResultSet updateRs = updateTableStmt.executeUpdate("ALTER TABLE ${tableName} ADD COLUMN ${columnName} BOOL")
+            log.debug('Table "variant_transcript" altered with new column created:' + updateRs.next())
+        }
+    }
+
+    private boolean columnExists(String columnName, String tableName) {
+        Statement showColumnStmt = connection.createStatement()
+        ResultSet showColumnRs = showColumnStmt.executeQuery("select * FROM ${tableName}")
+        // if the column does not exist we create it
+        ResultSetMetaData md = showColumnRs.getMetaData()
+        for (int i = 1; i <= md.getColumnCount(); i++) {
+            if (columnName == md.getColumnName(i)) {
+                return true
+            }
+        }
+        return false
+    }
+
     /**
      * request to mouse mine for data
      * @param fullQuery contains mousemine url and query
@@ -152,32 +195,19 @@ class LoadService {
      */
     protected List<GormEntity> loadData(String fullQuery, String type) {
         def jsonResult
-        if (USE_FILE) {
-            JsonSlurper slurper = new JsonSlurper(type: JsonParserType.CHARACTER_SOURCE)
-            switch (type) {
-                case 'strain':
-                    jsonResult = slurper.parse(strainFeedFile)
-                    break
-                case 'gene':
-                    jsonResult = slurper.parse(geneFeedFile)
-                    break
-                default:
-                    break
-            }
+        RestBuilder rest = new RestBuilder()
+        RestResponse restResponse = rest.get(fullQuery)
+        log.info("Request response = " + restResponse.statusCode.value())
+        if (restResponse.statusCode.value() == 200 && restResponse.json) {
+            jsonResult = restResponse.json.results
         } else {
-            RestBuilder rest = new RestBuilder()
-            RestResponse restResponse = rest.get(fullQuery)
-            log.info("Request response = " + restResponse.statusCode.value())
-            if (restResponse.statusCode.value() == 200 && restResponse.json) {
-                jsonResult = restResponse.json.results
-            } else {
-                log.error("Response to mouse mine data request: " + restResponse.statusCode.value() + " restResponse.text= " + restResponse.text)
-            }
+            log.error("Response to mouse mine data request: " + restResponse.statusCode.value() + " restResponse.text= " + restResponse.text)
         }
+
         return parseJsonData(jsonResult, type)
     }
 
-    private String[] getSynonyms(JSONArray jsonArray) {
+    private static String[] getSynonyms(JSONArray jsonArray) {
         String[] synonyms = new String[jsonArray.size()]
         for (int i = 0; i < jsonArray.size(); i++) {
             def obj = ((JSONObject) jsonArray[i]).get('value')

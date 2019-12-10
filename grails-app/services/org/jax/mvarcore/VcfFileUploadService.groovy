@@ -317,7 +317,7 @@ class VcfFileUploadService {
 
         def transcriptsRecs = Transcript.findAllByPrimaryIdentifierInList(batchOfTranscripts)
 
-        // insert Transcript
+        // insert Transcript/ Also the transcript/variant relationship table needs to be manually updated to contain the following column boolean : most_pathogenic
         PreparedStatement insertTranscripts = connection.prepareStatement("insert into transcript (primary_identifier, length, chromosome, location_start, location_end, gene_identifier) VALUES (?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS)
         PreparedStatement insertVariantsByStrain = connection.prepareStatement("insert into variant_strain (variant_strains_id, strain_id) VALUES (?, ?)")
         PreparedStatement insertVariantsByTranscript = connection.prepareStatement("insert into variant_transcript (variant_transcripts_id, transcript_id, most_pathogenic) VALUES (?, ?, ?)")
