@@ -48,7 +48,7 @@ class LoadService {
             loadMouseStrains()
         }
         // we need to have transcripts inserted before as well as genes
-        if (Transcript.count() > 0 && Gene.count() > 0 && tableHasValues('gene_transcript')) {
+        if (Transcript.count() > 0 && Gene.count() > 0 && !tableHasValues('gene_transcript')) {
             saveGeneTranscriptsRelationships()
         }
         updateVariantTranscriptTable()
@@ -169,8 +169,8 @@ class LoadService {
         def tableName = 'variant_transcript'
         if (!columnExists(columnName, tableName)) {
             Statement updateTableStmt = connection.createStatement()
-            ResultSet updateRs = updateTableStmt.executeUpdate("ALTER TABLE ${tableName} ADD COLUMN ${columnName} BOOL")
-            log.debug('Table "variant_transcript" altered with new column created:' + updateRs.next())
+            updateTableStmt.executeUpdate("ALTER TABLE ${tableName} ADD COLUMN ${columnName} BOOL")
+            log.debug('Table "variant_transcript" altered with new column created')
         }
     }
 
@@ -190,10 +190,7 @@ class LoadService {
     private boolean tableHasValues(String tableName) {
         Statement stmt = connection.createStatement()
         ResultSet rs = stmt.executeQuery("select * FROM ${tableName}")
-        if (!rs.next()) {
-            return false
-        }
-        return true
+        return rs.next()
     }
 
     /**

@@ -11,6 +11,7 @@ class Allele {
 
     static constraints = {
         primaryIdentifier nullable: false
+        primaryIdentifier unique: true
         symbol nullable: false
         name nullable: false
         type nullable: true

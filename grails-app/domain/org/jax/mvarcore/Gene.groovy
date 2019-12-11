@@ -12,6 +12,7 @@ class Gene {
     String ensemblGeneId
 
     static constraints = {
+        mgiId unique: true
         entrezGeneId nullable: true
         ensemblGeneId nullable:  true
         description nullable: true, sqlType: 'text'

@@ -10,6 +10,7 @@ class Strain {
 
     static constraints = {
         primaryIdentifier nullable: false
+        primaryIdentifier unique: true
         name nullable: false
         attributes nullable: true
     }

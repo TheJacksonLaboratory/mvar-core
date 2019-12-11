@@ -330,7 +330,8 @@ class VcfFileUploadService {
                 // add transcripts
                 variantKeys.next()
                 Long variantKey = variantKeys.getLong(1)
-                for (int i = 0; i < variant.info_transcript_name.size(); i++) {
+                int size = variant.info_transcript_name.size()
+                for (int i = 0; i < size; i++) {
                     String transcriptId = ((String) variant.info_transcript_name[i]).split('\\.')[0]
                     // check if transcript already exists, if not we create it
                     Transcript transcript
@@ -370,7 +371,7 @@ class VcfFileUploadService {
         }
         insertTranscripts.executeBatch()
         insertVariantsByStrain.executeBatch()
-
+        insertVariantsByTranscript.executeBatch()
     }
 
     private getGeneBySynonyms(List<Synonym> geneSynonymRecs, String geneName) {

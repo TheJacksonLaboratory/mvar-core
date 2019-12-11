@@ -18,6 +18,7 @@ class Transcript {
 
     static constraints = {
         primaryIdentifier nullable: false
+        primaryIdentifier unique: true
         length nullable: true
         chromosome nullable: false
         locationStart nullable: false
