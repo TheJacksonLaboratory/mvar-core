@@ -50,6 +50,11 @@ dependencies {
     compile "org.hibernate:hibernate-core:5.1.16.Final"
     compile "org.grails.plugins:views-json"
     compile "org.grails.plugins:views-json-templates"
+    compile "org.grails:grails-datastore-rest-client"
+    compile 'de.charite.compbio:Jannovar:0.32'
+    compile 'de.charite.compbio:jannovar-core:0.32'
+    compile 'de.charite.compbio:jannovar-hgvs:0.32'
+    compile 'de.charite.compbio:jannovar-htsjdk:0.32'
     console "org.grails:grails-console"
     profile "org.grails.profiles:rest-api"
     runtime "org.glassfish.web:el-impl:2.1.2-b03"

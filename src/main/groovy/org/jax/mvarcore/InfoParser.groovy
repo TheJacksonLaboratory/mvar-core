@@ -7,7 +7,7 @@ package org.jax.mvarcore
 abstract class InfoParser {
 
     String infoString
-    String[] infoArray
+    List<String[]> listOfInfoArray
 
     InfoParser(String infoString) {
         this.infoString = infoString
@@ -17,13 +17,13 @@ abstract class InfoParser {
         String idStr = getInfoId() + "="
         int startIdx = this.infoString.indexOf(idStr) + idStr.length()
         this.infoString = this.infoString.substring(startIdx)
-        infoArray = this.infoString.split("\\|")
-        if (infoArray.length < getInfoLength()) {
-            throw new IllegalArgumentException("This INFO string doesn't have the expected number of attributes : is " + infoArray.length + "; should be " + getInfoLength())
-        } else {
-            print("Warning, the expected Info length is " + getInfoLength() + " and the input has length :" + infoArray.length)
+        // split string by commas: a comma in the jannovar string separates multiple transcripts
+        String[] transcripts = this.infoString.split(",")
+        this.listOfInfoArray = new ArrayList<String[]>()
+        for (int i = 0; i < transcripts.size(); i++) {
+            String[] infoTmpArray = transcripts[i].split("\\|")
+            this.listOfInfoArray.add(infoTmpArray)
         }
-
     }
 
     /**
@@ -33,4 +33,5 @@ abstract class InfoParser {
     abstract String getInfoId()
 
     abstract int getInfoLength()
+
 }

@@ -71,7 +71,7 @@ class Variant {
 
     static constraints = {
 
-        position unique: ['assembly', 'ref', 'alt']
+//        position unique: ['assembly', 'ref', 'alt']
         allele nullable: true
         functionalClassCode nullable: true
         accession nullable: true
