@@ -275,7 +275,8 @@ class VcfFileUploadService {
         def geneSynonymRecs = Synonym.findAllByNameInList(batchOfGenes)
 
         // directly use java PreparedStatement to get ResultSet with keys
-        PreparedStatement insertVariants = connection.prepareStatement("insert into variant (chr, position, alt, ref, type, assembly, parent_ref_ind, parent_variant_ref_txt, variant_ref_txt, dna_hgvs_notation, protein_hgvs_notation, canon_var_identifier_id, gene_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS)
+        PreparedStatement insertVariants = connection.prepareStatement("insert into variant (chr, position, alt, ref, type, functional_class_code, assembly, parent_ref_ind, parent_variant_ref_txt, variant_ref_txt, dna_hgvs_notation, protein_hgvs_notation, canon_var_identifier_id, gene_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS)
+
         batchOfVars.eachWithIndex { variant, idx2 ->
             if (found.find { it == variant.variantRefTxt }) {
                 println(idx2 + " Existing record ID = " + variant.variantRefTxt)
@@ -297,19 +298,19 @@ class VcfFileUploadService {
                 insertVariants.setString(3, (String) variant.alt)
                 insertVariants.setString(4, (String) variant.ref)
                 insertVariants.setString(5, (String) variant.type)
-                insertVariants.setString(6, (String) variant.assembly)
-                insertVariants.setBoolean(7, (Boolean) variant.isParentVariant)
-                insertVariants.setString(8, (String) variant.parentVariantRef)
-                insertVariants.setString(9, (String) variant.variantRefTxt)
-                insertVariants.setString(10, (String) variant.info_hgvs_dna[0])
-                insertVariants.setString(11, (String) variant.info_hgvs_protein[0])
-                insertVariants.setLong(12, canonIdentifier.id)
+                insertVariants.setString(6, concatenate((String[]) variant.info_annotation))
+                insertVariants.setString(7, (String) variant.assembly)
+                insertVariants.setBoolean(8, (Boolean) variant.isParentVariant)
+                insertVariants.setString(9, (String) variant.parentVariantRef)
+                insertVariants.setString(10, (String) variant.variantRefTxt)
+                insertVariants.setString(11, concatenate((String[])variant.info_hgvs_dna))
+                insertVariants.setString(12, concatenate((String[])variant.info_hgvs_protein))
+                insertVariants.setLong(13, canonIdentifier.id)
                 if (geneId == null)
-                    insertVariants.setNull(13, Types.BIGINT)
+                    insertVariants.setNull(14, Types.BIGINT)
                 else
-                    insertVariants.setLong(13, geneId)
+                    insertVariants.setLong(14, geneId)
                 insertVariants.addBatch()
-
             }
         }
         insertVariants.executeBatch()
@@ -321,7 +322,6 @@ class VcfFileUploadService {
         PreparedStatement insertTranscripts = connection.prepareStatement("insert into transcript (primary_identifier, length, chromosome, location_start, location_end, gene_identifier) VALUES (?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS)
         PreparedStatement insertVariantsByStrain = connection.prepareStatement("insert into variant_strain (variant_strains_id, strain_id) VALUES (?, ?)")
         PreparedStatement insertVariantsByTranscript = connection.prepareStatement("insert into variant_transcript (variant_transcripts_id, transcript_id, most_pathogenic) VALUES (?, ?, ?)")
-
         batchOfVars.eachWithIndex { variant, idx2 ->
 
             if (found.find { it == variant.variantRefTxt }) {
@@ -372,6 +372,14 @@ class VcfFileUploadService {
         insertTranscripts.executeBatch()
         insertVariantsByStrain.executeBatch()
         insertVariantsByTranscript.executeBatch()
+    }
+
+    private String concatenate(String[] array) {
+        String result = ''
+        for (int i = 0; i < array.size(); i++) {
+            result = result == '' ? array[i] : result + ',' + array[i]
+        }
+        return result
     }
 
     private getGeneBySynonyms(List<Synonym> geneSynonymRecs, String geneName) {
@@ -476,6 +484,7 @@ class VcfFileUploadService {
                 variant.put("alt", vcfVariant.getAlt())
                 variant.put("type", vcfVariant.getType())
                 variant.assembly = assembly
+                variant.put("info_annotation", infoParser.annotation)
                 variant.put("info_gene", infoParser.geneName)
                 variant.put("info_transcript_name", infoParser.featureId)
                 variant.put("info_transcript_biotype", infoParser.transcriptBiotype)
