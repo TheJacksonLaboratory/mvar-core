@@ -8,11 +8,13 @@ class Transcript {
     String chromosome
     Long locationStart
     Long locationEnd
-    String geneIdentifier
+    String mgiGeneIdentifier
+    String ensGeneIdentifier
 
     static mapping = {
         primaryIdentifier index: true
-        geneIdentifier index: true
+        mgiGeneIdentifier index: true
+        ensGeneIdentifier index: true
         version false
     }
 
@@ -23,6 +25,7 @@ class Transcript {
         chromosome nullable: false
         locationStart nullable: false
         locationEnd nullable: false
-        geneIdentifier nullable: true
+        mgiGeneIdentifier nullable: true
+        ensGeneIdentifier nullable:true
     }
 }

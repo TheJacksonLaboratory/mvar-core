@@ -78,14 +78,14 @@ class Variant {
 
 //        position unique: ['assembly', 'ref', 'alt']
         gene nullable: true
-        functionalClassCode nullable: true
+        functionalClassCode nullable: true, sqlType: 'text'
         accession nullable: true
         canonVarIdentifier nullable: false
         parentVariantRefTxt nullable: false
         parentRefInd nullable: false
         externalId nullable: true
         externalSource nullable: true
-        dnaHgvsNotation nullable: true
-        proteinHgvsNotation nullable: true
+        dnaHgvsNotation nullable: true, sqlType: 'text'
+        proteinHgvsNotation nullable: true, sqlType: 'text'
     }
 }

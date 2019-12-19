@@ -14,7 +14,9 @@ import java.sql.Connection
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.ResultSetMetaData
+import java.sql.SQLType
 import java.sql.Statement
+import java.sql.Types
 
 
 @Transactional
@@ -24,7 +26,6 @@ class LoadService {
 
     // TODO move to config file
     private final String MM_URL = 'http://www.mousemine.org/mousemine/service/query/results'
-    private final String ENSEMBL_URL = 'http://rest.ensembl.org/'
 
     // Unused fields
     private final static USE_FILE = false
@@ -82,85 +83,6 @@ class LoadService {
         String fullQuery = url + '?query=' + geneQuery + '&format=jsonobjects'
         def geneList = loadData(fullQuery, 'gene')
         saveObjects(geneList, 1000)
-    }
-
-    /**
-     * Load new transcripts from the Ensembl Rest API given an ID and a List of Gene and Variant ID
-     * The Gene ID and Variant ID associated with the transcript
-     * @param ids
-     */
-    void loadNewTranscripts(Map<String, List<String>> ids) {
-        println("*** ADD NEW TRANSCRIPTS **")
-        log.info("*** ADD NEW TRANSCRIPTS **")
-        String lookupQuery = 'lookup/id/'
-        String url = "${ENSEMBL_URL}"
-        RestBuilder rest = new RestBuilder()
-        def transcriptList = []
-        ids.each { key, val ->
-            Transcript transcript = loadNewTranscript(rest, url + lookupQuery, key, val)
-            if (transcript)
-                transcriptList.add(transcript)
-        }
-        // as size might be small we set the batch size to the list size (so we have only one batch
-        saveObjects(transcriptList, transcriptList.size())
-    }
-
-    /**
-     * Load new transcript in DB given the transcript id. Using a RestBuilder, we connect to the
-     * Ensembl RESTAPI to retrieve the info if it exists.
-     * @param rest
-     * @param url
-     * @param id
-     * @param geneAndVariantIds
-     * @return
-     */
-    private Transcript loadNewTranscript(RestBuilder rest, String url, String id, List<String> geneAndVariantIds) {
-        String fullQuery = url + id + '?content-type=application/json;expand=1'
-        RestResponse resp = rest.get(fullQuery)
-        log.info("Request response = " + resp.statusCode.value())
-        JSONObject jsonResult
-        String respString = resp.getBody()
-
-        if (resp.statusCode.value() == 200 && respString) {
-            int begin = respString.indexOf("{")
-            int end = respString.lastIndexOf("}") + 1
-            respString = respString.substring(begin, end)
-            jsonResult = new JSONObject(respString)
-        } else {
-            log.error("Response to mouse mine data request: " + resp.statusCode.value() + " restResponse.text= " + resp.text)
-            return null
-        }
-        int start = jsonResult.get('start') as int
-        int end = jsonResult.get('end') as int
-        // TODO find how to get base pair length
-//        int length = (end - start) + 1
-        Transcript transcript = new Transcript(
-                primaryIdentifier: id,
-//                length: length,
-                chromosome: jsonResult.get('seq_region_name'),
-                locationStart: start,
-                locationEnd: end,
-                geneIdentifier: jsonResult.get('Parent')
-        )
-        // add variant/transcript relationship
-        Variant variant = Variant.findById(Long.parseLong(geneAndVariantIds.get(1)))
-        if (variant)
-            variant.addToTranscripts(transcript)
-        // add gene/transcript relationship
-        Gene gene
-        if (geneAndVariantIds.get(0) != '') {
-            gene = Gene.createCriteria().get {
-                eq('mgiId', geneAndVariantIds.get(0))
-            }
-        } else {
-            gene = Gene.createCriteria().get {
-                eq('ensemblGeneId', jsonResult.get('Parent'))
-            }
-        }
-        if (gene)
-            gene.addToTranscripts(transcript)
-
-        return transcript
     }
 
     private updateVariantTranscriptTable() {
@@ -342,8 +264,6 @@ class LoadService {
                 obj = mmObj.properties as Gene
             } else if (mmObj instanceof Strain) {
                 obj = mmObj.properties as Strain
-            } else if (mmObj instanceof Transcript) {
-                obj = mmObj.properties as Transcript
             } else {
                 throw new Exception('this type is not supported')
             }
@@ -370,12 +290,6 @@ class LoadService {
                             st.save(failOnError: true)
                         }
                     }
-                } else if (mmObj instanceof Transcript) {
-                    Transcript.withTransaction {
-                        batch.each { tr ->
-                            tr.save(failOnError: true)
-                        }
-                    }
                 }
                 batch.clear()
                 cleanUpGorm()
@@ -400,7 +314,8 @@ class LoadService {
      *
      */
     private void saveGeneTranscriptsRelationships() {
-
+        println("*** GENE/TRANSCRIPT LOAD **")
+        log.info("*** GENE/TRANSCRIPT LOAD **")
         List<String> batchOfGenesIds = []
         List<Transcript> batchOfTranscripts = []
 
@@ -409,7 +324,7 @@ class LoadService {
 
         listOfTranscripts.eachWithIndex { transcript, idx ->
             batchOfTranscripts.add(transcript)
-            batchOfGenesIds.add(transcript.geneIdentifier)
+            batchOfGenesIds.add(transcript.mgiGeneIdentifier)
             if (idx > 1 && idx % batchSize == 0) {
 
                 batchInsertGeneTranscriptsJDBC(batchOfTranscripts, batchOfGenesIds)
@@ -430,20 +345,19 @@ class LoadService {
 
     private batchInsertGeneTranscriptsJDBC(List<Transcript> batchOfTranscripts, List<String> batchOfGeneIds) {
         PreparedStatement insertGeneTranscripts = connection.prepareStatement("insert into gene_transcript (gene_transcripts_id, transcript_id) VALUES (?, ?)")
-
         List<String> geneMgiIds = getMgiIds(batchOfGeneIds)
         def recsGenes = Gene.findAllByMgiIdInList(geneMgiIds)
         batchOfTranscripts.eachWithIndex { transcript, idx2 ->
             // add gene/transcript relationship
             Gene geneFound = recsGenes.find {
-                it.mgiId == getMgiId(transcript.geneIdentifier)
+                it.mgiId == getMgiId(transcript.mgiGeneIdentifier)
             }
             if (geneFound != null) {
                 insertGeneTranscripts.setLong(1, geneFound.id)
                 insertGeneTranscripts.setLong(2, transcript.id)
                 insertGeneTranscripts.addBatch()
             } else {
-                print 'gene not found for id: ' + transcript.geneIdentifier
+                print 'gene not found for id: ' + transcript.mgiGeneIdentifier
             }
         }
         insertGeneTranscripts.executeBatch()

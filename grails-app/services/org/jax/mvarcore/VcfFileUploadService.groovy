@@ -2,8 +2,11 @@ package org.jax.mvarcore
 
 import gngs.VCF
 import grails.gorm.transactions.Transactional
+import grails.plugins.rest.client.RestBuilder
+import grails.plugins.rest.client.RestResponse
 import groovy.sql.Sql
 import org.apache.commons.lang.time.StopWatch
+import org.grails.web.json.JSONObject
 import org.hibernate.internal.SessionImpl
 
 import org.springframework.dao.InvalidDataAccessApiUsageException
@@ -21,8 +24,8 @@ import java.sql.Types
 class VcfFileUploadService {
 
     def sessionFactory
-    LoadService loadService
     Map<String, List<String>> newTranscriptsMap
+    private final String ENSEMBL_URL = 'http://rest.ensembl.org/'
 
     void loadVCF(File vcfFile) {
 
@@ -74,6 +77,8 @@ class VcfFileUploadService {
         List<String> mouseChromosomes = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', 'X', 'Y', 'MT']
 
         // Map used to collect non-existing transcripts in DB
+        // key : transcript id
+        // value : list of 3 strings with 0 = gene id, 1 = variant id, 2 = most pathogenic
         newTranscriptsMap = new HashMap<String, List<String>>()
         mouseChromosomes.each { chr ->
 
@@ -94,7 +99,7 @@ class VcfFileUploadService {
 
         }
         // add new Transcripts to DB
-        loadService.loadNewTranscripts(newTranscriptsMap)
+        loadNewTranscripts(newTranscriptsMap)
 
     }
 
@@ -319,7 +324,6 @@ class VcfFileUploadService {
         def transcriptsRecs = Transcript.findAllByPrimaryIdentifierInList(batchOfTranscripts)
 
         // insert Transcript/ Also the transcript/variant relationship table needs to be manually updated to contain the following column boolean : most_pathogenic
-        PreparedStatement insertTranscripts = connection.prepareStatement("insert into transcript (primary_identifier, length, chromosome, location_start, location_end, gene_identifier) VALUES (?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS)
         PreparedStatement insertVariantsByStrain = connection.prepareStatement("insert into variant_strain (variant_strains_id, strain_id) VALUES (?, ?)")
         PreparedStatement insertVariantsByTranscript = connection.prepareStatement("insert into variant_transcript (variant_transcripts_id, transcript_id, most_pathogenic) VALUES (?, ?, ?)")
         batchOfVars.eachWithIndex { variant, idx2 ->
@@ -351,7 +355,7 @@ class VcfFileUploadService {
                             gene = getGeneBySynonyms(geneSynonymRecs, (String) variant.info_gene[i])
                         }
                         if (!newTranscriptsMap.containsKey(transcriptId))
-                            newTranscriptsMap.put(transcriptId, [gene != null ? gene.mgiId : '', String.valueOf(variantKey)] )
+                            newTranscriptsMap.put(transcriptId, [gene != null ? gene.mgiId : '', String.valueOf(variantKey), String.valueOf(i==0)] )
                     } else {
                         // we add the transcript / variant relationship
                         insertVariantsByTranscript.setLong(1, variantKey)
@@ -369,7 +373,6 @@ class VcfFileUploadService {
                 }
             }
         }
-        insertTranscripts.executeBatch()
         insertVariantsByStrain.executeBatch()
         insertVariantsByTranscript.executeBatch()
     }
@@ -393,6 +396,139 @@ class VcfFileUploadService {
             } as Gene
         }
         return gene
+    }
+
+    /**
+     * Load new transcripts from the Ensembl Rest API given an ID and a List of Gene and Variant ID
+     * The Gene ID and Variant ID associated with the transcript
+     * @param ids
+     */
+    void loadNewTranscripts(Map<String, List<String>> ids) {
+        println("*** ADD NEW TRANSCRIPTS **")
+        log.info("*** ADD NEW TRANSCRIPTS **")
+        String lookupQuery = 'lookup/id/'
+        String url = "${ENSEMBL_URL}"
+        RestBuilder rest = new RestBuilder()
+        def transcriptList = []
+        ids.each { key, val ->
+            TranscriptContainer transcript = loadNewTranscript(rest, url + lookupQuery, key, val)
+            if (transcript)
+                transcriptList.add(transcript)
+        }
+        // as size might be small we set the batch size to the list size (so we have only one batch
+        saveNewTranscripts(transcriptList, transcriptList.size())
+    }
+
+    /**
+     * Load new transcript in DB given the transcript id. Using a RestBuilder, we connect to the
+     * Ensembl RESTAPI to retrieve the info if it exists.
+     * @param rest
+     * @param url
+     * @param id
+     * @param geneAndVariantIds
+     * @return
+     */
+    private TranscriptContainer loadNewTranscript(RestBuilder rest, String url, String id, List<String> idsAndMostPathogenic) {
+        String fullQuery = url + id + '?content-type=application/json;expand=1'
+        RestResponse resp = rest.get(fullQuery)
+        log.info("Request response = " + resp.statusCode.value())
+        JSONObject jsonResult
+        String respString = resp.getBody()
+
+        if (resp.statusCode.value() == 200 && respString) {
+            int begin = respString.indexOf("{")
+            int end = respString.lastIndexOf("}") + 1
+            respString = respString.substring(begin, end)
+            jsonResult = new JSONObject(respString)
+        } else {
+            log.error("Response to mouse mine data request: " + resp.statusCode.value() + " restResponse.text= " + resp.text)
+            return null
+        }
+        int start = jsonResult.get('start') as int
+        int end = jsonResult.get('end') as int
+        // TODO find how to get base pair length
+//        int length = (end - start) + 1
+        // add variant/transcript relationship
+        Variant variant = Variant.findById(Long.parseLong(idsAndMostPathogenic.get(1)))
+        // add gene/transcript relationship
+        Gene gene
+        if (idsAndMostPathogenic.get(0) != '') {
+            gene = Gene.createCriteria().get {
+                eq('mgiId', idsAndMostPathogenic.get(0))
+            }
+        } else {
+            gene = Gene.createCriteria().get {
+                eq('ensemblGeneId', jsonResult.get('Parent'))
+            }
+        }
+        TranscriptContainer transcript = new TranscriptContainer(
+                primaryIdentifier: id,
+//                length: length,
+                chromosome: jsonResult.get('seq_region_name'),
+                locationStart: start,
+                locationEnd: end,
+                ensGeneIdentifier: jsonResult.get('Parent'),
+                variant: variant,
+                gene: gene,
+                mostPathogenic: Boolean.valueOf(idsAndMostPathogenic.get(2))
+        )
+        return transcript
+    }
+
+    private void saveNewTranscripts(List<TranscriptContainer> listOfTranscripts, int batchSize) {
+        List<TranscriptContainer> batchOfTranscripts = []
+        listOfTranscripts.eachWithIndex { transcript, idx ->
+            batchOfTranscripts.add(transcript)
+            if (idx > 1 && idx % batchSize == 0) {
+                batchInsertNewTranscriptsJDBC(batchOfTranscripts)
+                //clear batch lists
+                batchOfTranscripts.clear()
+                cleanUpGorm()
+            }
+        }
+        //last batch
+        if (listOfTranscripts.size() > 0) {
+            batchInsertNewTranscriptsJDBC(batchOfTranscripts)
+            batchOfTranscripts.clear()
+            cleanUpGorm()
+        }
+    }
+
+    private batchInsertNewTranscriptsJDBC(List<TranscriptContainer> batchOfTranscripts) {
+        PreparedStatement insertTranscripts = connection.prepareStatement("insert into transcript (primary_identifier, length, chromosome, location_start, location_end, mgi_gene_identifier, ens_gene_identifier) VALUES (?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS)
+
+        batchOfTranscripts.eachWithIndex { transcript, idx ->
+            insertTranscripts.setString(1, transcript.primaryIdentifier)
+            insertTranscripts.setInt(2, transcript.length)
+            insertTranscripts.setString(3, transcript.chromosome)
+            insertTranscripts.setLong(4, transcript.locationStart)
+            insertTranscripts.setLong(5, transcript.locationEnd)
+            if (transcript.mgiGeneIdentifier)
+                insertTranscripts.setString(6, transcript.mgiGeneIdentifier)
+            else
+                insertTranscripts.setNull(6, Types.VARCHAR)
+            insertTranscripts.setString(7, transcript.ensGeneIdentifier)
+            insertTranscripts.addBatch()
+        }
+        insertTranscripts.executeBatch()
+        ResultSet transcriptsKeys = insertTranscripts.getGeneratedKeys()
+
+        PreparedStatement insertVariantsByTranscript = connection.prepareStatement("insert into variant_transcript (variant_transcripts_id, transcript_id, most_pathogenic) VALUES (?, ?, ?)")
+
+        batchOfTranscripts.eachWithIndex { transcript, idx ->
+            // add transcripts/variant relationship
+            transcriptsKeys.next()
+            Long transcriptKey = transcriptsKeys.getLong(1)
+
+            // we add the transcript / variant relationship
+            insertVariantsByTranscript.setLong(1, transcript.variant.id)
+            insertVariantsByTranscript.setLong(2, transcriptKey)
+            insertVariantsByTranscript.setBoolean(3, transcript.mostPathogenic)
+            insertVariantsByTranscript.addBatch()
+
+        }
+        insertVariantsByTranscript.executeBatch()
+
     }
 
     protected Sql getSql() {
