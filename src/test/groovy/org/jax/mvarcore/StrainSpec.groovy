@@ -13,6 +13,6 @@ class StrainSpec extends Specification implements DomainUnitTest<Strain> {
 
     void "test something"() {
         expect:"fix me"
-            true == true
+        true
     }
 }

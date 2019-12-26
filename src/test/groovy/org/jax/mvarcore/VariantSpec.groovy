@@ -13,6 +13,6 @@ class VariantSpec extends Specification implements DomainUnitTest<Variant> {
 
     void "test something"() {
         expect:"fix me"
-            true == true
+        true
     }
 }

@@ -13,6 +13,6 @@ class TranscriptSpec extends Specification implements DomainUnitTest<Transcript>
 
     void "test something"() {
         expect:"fix me"
-            true == true
+        true
     }
 }

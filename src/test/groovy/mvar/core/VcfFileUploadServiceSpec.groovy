@@ -5,6 +5,7 @@ import grails.testing.services.ServiceUnitTest
 import org.jax.mvarcore.Variant
 import org.jax.mvarcore.VariantCanonIdentifier
 import org.jax.mvarcore.VcfFileUploadService
+import org.junit.Ignore
 import spock.lang.Specification
 
 class VcfFileUploadServiceSpec extends Specification implements ServiceUnitTest<VcfFileUploadService>, DataTest{
@@ -30,6 +31,7 @@ class VcfFileUploadServiceSpec extends Specification implements ServiceUnitTest<
     def cleanup() {
     }
 
+    @Ignore
     void "test vcf load"() {
 
         setup:

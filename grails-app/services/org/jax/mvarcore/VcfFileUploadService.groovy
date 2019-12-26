@@ -295,7 +295,6 @@ class VcfFileUploadService {
                 // Do we want that? to link only the most pathogenic gene info to this variant? or do we have a one to many relationship?
                 def geneName = ((List)variant.functional_annotation).get(0)["Gene_Name"]
                 Gene gene = geneSymbolRecs.find { it.symbol == geneName }
-//                Gene gene = geneSymbolRecs.find { it.symbol == variant.info_gene[0] }
                 // we get the first gene info in the jannovar info string
                 if (gene == null) {
                     // We check in the list of synonyms to get the corresponding gene
