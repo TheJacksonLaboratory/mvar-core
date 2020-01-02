@@ -5,7 +5,6 @@ import grails.plugins.rest.client.RestBuilder
 import grails.plugins.rest.client.RestResponse
 
 import org.grails.datastore.gorm.GormEntity
-import org.grails.io.support.ClassPathResource
 import org.grails.web.json.JSONArray
 import org.grails.web.json.JSONObject
 import org.hibernate.internal.SessionImpl
@@ -14,9 +13,7 @@ import java.sql.Connection
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.ResultSetMetaData
-import java.sql.SQLType
 import java.sql.Statement
-import java.sql.Types
 
 
 @Transactional
@@ -29,9 +26,9 @@ class LoadService {
 
     // Unused fields
     private final static USE_FILE = false
-    File geneFeedFile = new ClassPathResource('results_gene.json').file
-    File strainFeedFile = new ClassPathResource('results_strain.json').file
-    File transcriptFeedFile = new ClassPathResource('results_transcripts.json').file
+//    File geneFeedFile = new ClassPathResource('results_gene.json').file
+//    File strainFeedFile = new ClassPathResource('results_strain.json').file
+//    File transcriptFeedFile = new ClassPathResource('results_transcripts.json').file
 
     def serviceMethod() {
 

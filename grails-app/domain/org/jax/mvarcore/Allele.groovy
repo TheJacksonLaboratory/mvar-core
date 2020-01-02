@@ -2,19 +2,18 @@ package org.jax.mvarcore
 
 class Allele {
 
+    String type
+    String name
     String primaryIdentifier
     String symbol
-    String name
-    String type
 
     static hasMany = [strains: Strain]
 
     static constraints = {
-        primaryIdentifier nullable: false
-        primaryIdentifier unique: true
-        symbol nullable: false
-        name nullable: false
         type nullable: true
+        name nullable: false
+        primaryIdentifier nullable: false, unique: true
+        symbol nullable: false
     }
 
     static mapping = {

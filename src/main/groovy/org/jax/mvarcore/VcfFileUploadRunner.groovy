@@ -17,7 +17,7 @@ class VcfFileUploadRunner implements CommandLineRunner {
     @Override
     void run(String...args) throws Exception {
         String folderPath
-        if (args != null) {
+        if (args != null && args.size() > 0) {
             folderPath = args[0]
         } else {
             return

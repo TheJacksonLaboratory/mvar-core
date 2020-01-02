@@ -580,9 +580,6 @@ class VcfFileUploadService {
 
     private List<Map> parseVcf(String chromosome, File vcfFile, String assembly) {
 
-        // load jannovar reference info
-        JannovarUtility.loadReference()
-
         //Parsing of liftover files should be ONLY for liftover to GRCm38
         //GRCm38 vcf files should have start with GRCm38
 
@@ -636,11 +633,8 @@ class VcfFileUploadService {
                 if (chromosomeRead == 'Y') {
                     chromosomeRead = '21'
                 }
-                String refSeqAccession = JannovarUtility.getRefSeqAccessionId(Integer.parseInt(chromosomeRead))
 
-                variant.put("transcript_ref_access", refSeqAccession)
-
-                ///holds full variation change for the parent reference <chr_pos_ref_alt>  -- ref and alt is empty will have '.' as value
+                // holds full variation change for the parent reference <chr_pos_ref_alt>  -- ref and alt is empty will have '.' as value
                 String refIn = variant.ref ?: '.'
                 String altIn = variant.alt ?: '.'
                 String parentRefVariant = variant.chr + '_' + variant.pos + '_' + variant.ref + '_' + variant.alt

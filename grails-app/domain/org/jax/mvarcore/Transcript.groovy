@@ -5,10 +5,10 @@ class Transcript {
 
     String primaryIdentifier
     int length
-    String chromosome
     Long locationStart
     Long locationEnd
     String mgiGeneIdentifier
+    String chromosome
     String ensGeneIdentifier
 
     static mapping = {
@@ -19,13 +19,12 @@ class Transcript {
     }
 
     static constraints = {
-        primaryIdentifier nullable: false
-        primaryIdentifier unique: true
+        primaryIdentifier nullable: false, unique: true
         length nullable: true
-        chromosome nullable: false
         locationStart nullable: false
         locationEnd nullable: false
         mgiGeneIdentifier nullable: true
+        chromosome nullable: false
         ensGeneIdentifier nullable:true
     }
 }
