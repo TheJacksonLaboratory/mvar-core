@@ -12,8 +12,6 @@ import org.jax.mvarcore.parser.AnnotationParser
 import org.jax.mvarcore.parser.InfoParser
 import org.springframework.dao.InvalidDataAccessApiUsageException
 
-import org.jax.mvarcore.jannovar.JannovarUtility
-
 import java.sql.Connection
 import java.sql.PreparedStatement
 import java.sql.ResultSet
