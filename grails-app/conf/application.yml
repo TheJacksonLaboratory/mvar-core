@@ -95,8 +95,8 @@ environments:
     development:
         dataSource:
             dbCreate: update
-            url: jdbc:mysql://localhost:3306/mvar_core?useServerPrepStmts=false&rewriteBatchedStatements=true&autoReconnect=true&useUnicode=yes&characterEncoding=UTF-8&serverTimezone=UTC
-			#url: jdbc:mysql://localhost:3306/mvar_core?autoReconnect=true&useUnicode=yes&characterEncoding=UTF-8&serverTimezone=UTC
+            url: jdbc:mysql://mvr-test01:3306/mvar_core?useServerPrepStmts=false&rewriteBatchedStatements=true&autoReconnect=true&useUnicode=yes&characterEncoding=UTF-8&serverTimezone=UTC
+            #url: jdbc:mysql://localhost:3306/mvar_core?autoReconnect=true&useUnicode=yes&characterEncoding=UTF-8&serverTimezone=UTC
         uploads:
             vcf: "${user.home}/MVAR/vcf_uploads"
     test:
