@@ -74,29 +74,31 @@ class VcfFileUploadService {
         //persist data by chromosome -- TODO: check potential for multi-threaded process
         //TODO: add mouse chr to config
         List<String> mouseChromosomes = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', 'X', 'Y', 'MT']
-
+        List<String> varTypes = ['SNP', 'DEL', 'INS']
         // Map used to collect non-existing transcripts in DB
         // key : transcript id
         // value : list of 3 strings with 0 = gene id, 1 = variant id, 2 = most pathogenic
         newTranscriptsMap = [:]
-        mouseChromosomes.each { chr ->
+        varTypes.each { type ->
+            println("Variant type = " + type)
+            mouseChromosomes.each { chr ->
+                StopWatch stopWatch = new StopWatch()
+                stopWatch.start()
 
-            StopWatch stopWatch = new StopWatch()
-            stopWatch.start()
+                List<Map> vcfVariants = parseVcf(chr, vcfFile, assembly, type)
+                println("CHR = " + chr + ', variant size= ' + vcfVariants.size())
 
-            List<Map> vcfVariants = parseVcf(chr, vcfFile, assembly)
-            println("CHR = " + chr + ', variant size= ' + vcfVariants.size())
+                //insert canonicals
+                insertCanonVariantsBatch(vcfVariants)
+                //insert variants, transcript, hgvs and relationships, and collect new transcripts not in DB
+                insertVariantsBatch(vcfVariants)
 
-            //insert canonicals
-            insertCanonVariantsBatch(vcfVariants)
-            //insert variants, transcript, hgvs and relationships, and collect new transcripts not in DB
-            insertVariantsBatch(vcfVariants)
-
-            println("Chr= " + chr + " : persistance load = ${stopWatch} time: ${new Date()}")
-            stopWatch.reset()
-            stopWatch.start()
-
+                println("Chr= " + chr + " : persistance load = ${stopWatch} time: ${new Date()}")
+                stopWatch.reset()
+                stopWatch.start()
+            }
         }
+
         // add new Transcripts to DB
         loadNewTranscripts(newTranscriptsMap)
 
@@ -576,7 +578,7 @@ class VcfFileUploadService {
             return false
     }
 
-    private List<Map> parseVcf(String chromosome, File vcfFile, String assembly) {
+    private List<Map> parseVcf(String chromosome, File vcfFile, String assembly, String type) {
 
         //Parsing of liftover files should be ONLY for liftover to GRCm38
         //GRCm38 vcf files should have start with GRCm38
@@ -585,13 +587,10 @@ class VcfFileUploadService {
 
         List<Map> variantList = []
         try {
-
             //vcfFileInputStream.line
             def vcf = VCF.parse(vcfFile.getPath()) { v ->
-
-                v.chr == 'chr' + chromosome || v.chr == chromosome
+                (v.chr == 'chr' + chromosome || v.chr == chromosome) && v.type == type
             }
-
             println("parsed variants = " + vcf.getVariants().size())
             // get strain name from last header column
             def strain = ''
