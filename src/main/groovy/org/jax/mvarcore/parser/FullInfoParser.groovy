@@ -14,16 +14,16 @@ class FullInfoParser {
      * @param infoString
      */
     FullInfoParser(String infoString) {
-        AnnotationParser annParser = new AnnotationParser(infoString)
-        infosDataMap['ANN'] = annParser.listOfAnnMap
-        ConsequenceParser csqParser = new ConsequenceParser(infoString)
-        infosDataMap['CSQ'] = csqParser.listOfCsqMap
-        DP4Parser dp4Parser = new DP4Parser(infoString)
-        infosDataMap['DP4'] = dp4Parser.dp4Map
-        DPParser dpParser = new DPParser(infoString)
-        infosDataMap['DP'] = dpParser.dpMap
-        SvAnnotationParser svAnnotParser = new SvAnnotationParser(infoString)
-        infosDataMap['SVANN'] = svAnnotParser.listOfSvann
+        AnnotationParser annParser = new AnnotationParser()
+        infosDataMap['ANN'] = annParser.parse(infoString)
+        ConsequenceParser csqParser = new ConsequenceParser()
+        infosDataMap['CSQ'] = csqParser.parse(infoString)
+        DP4Parser dp4Parser = new DP4Parser()
+        infosDataMap['DP4'] = dp4Parser.parse(infoString)
+        DPParser dpParser = new DPParser()
+        infosDataMap['DP'] = dpParser.parse(infoString)
+        SvAnnotationParser svAnnotParser = new SvAnnotationParser()
+        infosDataMap['SVANN'] = svAnnotParser.parse(infoString)
     }
 
 }

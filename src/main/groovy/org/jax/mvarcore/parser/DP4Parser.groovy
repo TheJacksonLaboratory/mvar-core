@@ -1,16 +1,9 @@
 package org.jax.mvarcore.parser
 
+/**
+ * ##INFO=<ID=DP4,Number=4,Type=Integer,Description="Total Number of high-quality ref-fwd, ref-reverse, alt-fwd and alt-reverse bases">
+ */
 class DP4Parser extends InfoParser {
-
-    def dp4Map
-
-    /**
-     * ##INFO=<ID=DP4,Number=4,Type=Integer,Description="Total Number of high-quality ref-fwd, ref-reverse, alt-fwd and alt-reverse bases">
-     * @param infoString
-     */
-    DP4Parser(String infoString) {
-        super(infoString)
-    }
 
     @Override
     String getInfoId() {
@@ -18,10 +11,10 @@ class DP4Parser extends InfoParser {
     }
 
     @Override
-    Object parse() {
+    Object parse(String infoString) {
         // split by " 'id'= "
         infos = infoString.split(getInfoId() + "=")
-        dp4Map = [:]
+        def dp4Map = [:]
         if (infos.size() > 1) {
             // Total Number of high-quality ref-fwd, ref-reverse, alt-fwd and alt-reverse bases
             // remove all string after tab
@@ -35,6 +28,7 @@ class DP4Parser extends InfoParser {
             dp4Map["alt-fwd"] = dp4Info[2]
             dp4Map["alt-reverse"] = dp4Info[3]
         }
+        return dp4Map
     }
 
     @Override

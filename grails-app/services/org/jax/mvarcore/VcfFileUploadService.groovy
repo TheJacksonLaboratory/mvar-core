@@ -104,45 +104,6 @@ class VcfFileUploadService {
 
     }
 
-    // TODO: leaving this commented out for now. some concepts here are still useful
-//    private void insertVariants(Map varIn){
-//
-//
-//        String SELECT_LAST_INSERT_ID = 'SELECT LAST_INSERT_ID() as ID'
-//        String INSERT_INTO_DB_VARIANT_CANONICAL_ID = 'insert into variant_canon_identifier (version, variant_ref_txt) VALUES (0, ?)'
-//        String INSERT_INTO_DB_VARIANT = 'insert into variant (version, chr, position, alt, ref, type, assembly, parent_ref_ind, parent_variant_ref_txt, canon_var_identifier_id) ' +
-//                'VALUES (0, ?,?,?,?,?,?,?,?,?)' //  + SELECT_CANONICAL_ID + ')'
-//        String SELECT_EXTERNAL_SOURCE = '(select id from source where source_name = ?)'
-//        String INSERT_INTO_DB_IDENTIFIER = 'insert into identifier (version, external_source_id, external_id) VALUES (0, ' + SELECT_EXTERNAL_SOURCE + ', ?)'
-//        String INSERT_INTO_DB_VARIANT_IDENTIFIER = 'insert into variant_identifier (variant_identifier_id, identifier_id) VALUES (?, ?)'
-//
-//        final Sql sql = getSql()
-//        //sql.withBatch(500, INSERT_INTO_DB_TERM_DB_GENES) { BatchingPreparedStatementWrapper ps ->
-//
-//        //canonical id
-//        sql.execute(INSERT_INTO_DB_VARIANT_CANONICAL_ID, varIn.parentVariantRef)
-//        String lastCanonVariantID = sql.rows(SELECT_LAST_INSERT_ID).get(0).ID
-//
-//        //variant
-//        sql.execute(INSERT_INTO_DB_VARIANT, [varIn.chr, varIn.pos, varIn.alt,
-//                                             varIn.ref, varIn.type,  varIn.assembly, varIn.isParentVariant,
-//                                             varIn.parentVariantRef, lastCanonVariantID]) //, varIn.parentVariantRef])
-//        String lastVariantID = sql.rows(SELECT_LAST_INSERT_ID).get(0).ID
-//
-//        if (varIn.ID && varIn.ID.size() > 1) {
-//
-//            //identifier
-//            sql.execute(INSERT_INTO_DB_IDENTIFIER, ['dbSNP', varIn.ID])
-//            String lastIdentifierId = sql.rows(SELECT_LAST_INSERT_ID).get(0).ID
-//
-//            //variant_identifier relation
-//            sql.execute(INSERT_INTO_DB_VARIANT_IDENTIFIER, [lastVariantID, lastIdentifierId])
-//        }
-//        //sql.commit()
-//        //sql.close()
-//
-//    }
-
     /**
      * Insert Canonicals in batch
      * @param varList
@@ -601,11 +562,12 @@ class VcfFileUploadService {
                 }
             }
 
+            InfoParser infoParser = new AnnotationParser()
+
             vcf.getVariants().each { vcfVariant ->
 
                 // Get Info column (jannovar data)
-                String annotStr = vcfVariant.getInfo().get("ANN")
-                InfoParser infoParser = new AnnotationParser("ANN=" + annotStr)
+                String annotStr = "ANN=" + vcfVariant.getInfo().get("ANN")
 
                 //compile the vcfVariant and vcfVariant info to build a JSON object
                 //def jsp = new JsonSlurper()
@@ -621,7 +583,7 @@ class VcfFileUploadService {
                 variant.put("alt", vcfVariant.getAlt())
                 variant.put("type", vcfVariant.getType())
                 variant.assembly = assembly
-                variant.put("functional_annotation", infoParser.listOfAnnMap)
+                variant.put("functional_annotation", infoParser.parse(annotStr))
                 variant.put("strain", strain)
 
                 if (chromosomeRead == 'X') {
@@ -674,8 +636,6 @@ class VcfFileUploadService {
             println(error)
             throw e
         }
-
-
         return variantList
     }
 }

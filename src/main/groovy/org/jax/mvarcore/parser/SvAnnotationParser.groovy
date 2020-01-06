@@ -2,25 +2,21 @@ package org.jax.mvarcore.parser
 
 class SvAnnotationParser extends InfoParser {
 
-    def listOfSvann
-
-    /**
-     * ##INFO=<ID=SVANN,Number=1,Type=String,Description="Functional SV Annotation:'Annotation|Annotation_Impact|Gene_Name|Gene_ID|Feature_Type|Feature_ID|Transcript_BioType|ERRORS / WARNINGS / INFO'">
-     * @param infoString
-     */
-    SvAnnotationParser(String infoString) {
-        super(infoString)
-    }
-
     @Override
     String getInfoId() {
         return "SVANN"
     }
 
+    /**
+     * Parse string in the following form:
+     *  ##INFO=<ID=SVANN,Number=1,Type=String,Description="Functional SV Annotation:'Annotation|Annotation_Impact|Gene_Name|Gene_ID|Feature_Type|Feature_ID|Transcript_BioType|ERRORS / WARNINGS / INFO'">
+     * @param infoString
+     * @return
+     */
     @Override
-    Object parse() {
+    Object parse(String infoString) {
         // ##INFO=<ID=SVANN,Number=1,Type=String,Description="Functional SV Annotation:'Annotation|Annotation_Impact|Gene_Name|Gene_ID|Feature_Type|Feature_ID|Transcript_BioType|ERRORS / WARNINGS / INFO'">
-        listOfSvann = super.parse()
+        return super.parse(infoString)
     }
 
     @Override
