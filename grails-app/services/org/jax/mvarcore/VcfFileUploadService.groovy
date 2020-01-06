@@ -567,11 +567,11 @@ class VcfFileUploadService {
             vcf.getVariants().each { vcfVariant ->
 
                 // Get Info column (jannovar data)
-                String annotStr = "ANN=" + vcfVariant.getInfo().get("ANN")
-
+                StringBuilder annotStr = new StringBuilder("ANN=")
+                annotStr.append(vcfVariant.getInfo().get("ANN"))
                 //compile the vcfVariant and vcfVariant info to build a JSON object
                 //def jsp = new JsonSlurper()
-                Map<String, Object> variantOut = [:]
+//                Map<String, Object> variantOut = [:]
 
                 String chromosomeRead = vcfVariant.getChr().replace('ch', '').replace('r', '')
 
@@ -583,7 +583,7 @@ class VcfFileUploadService {
                 variant.put("alt", vcfVariant.getAlt())
                 variant.put("type", vcfVariant.getType())
                 variant.assembly = assembly
-                variant.put("functional_annotation", infoParser.parse(annotStr))
+                variant.put("functional_annotation", infoParser.parse(annotStr.toString()))
                 variant.put("strain", strain)
 
                 if (chromosomeRead == 'X') {
@@ -594,10 +594,11 @@ class VcfFileUploadService {
                 }
 
                 // holds full variation change for the parent reference <chr_pos_ref_alt>  -- ref and alt is empty will have '.' as value
-                String refIn = variant.ref ?: '.'
-                String altIn = variant.alt ?: '.'
-                String parentRefVariant = variant.chr + '_' + variant.pos + '_' + variant.ref + '_' + variant.alt
-                variant.put("parentVariantRef", parentRefVariant)
+//                String refIn = variant.ref ?: '.'
+//                String altIn = variant.alt ?: '.'
+                StringBuilder parentRefVariant = new StringBuilder((String) variant.chr)
+                parentRefVariant.append('_').append(variant.pos).append('_').append(variant.ref).append('_').append(variant.alt)
+                variant.put("parentVariantRef", parentRefVariant.toString())
 
 
                 String orgPos = vcfVariant.getInfo().OriginalStart
@@ -621,10 +622,9 @@ class VcfFileUploadService {
                     variant.put("ref", vcfVariant.getRef())
                     variant.put("alt", vcfVariant.getAlt())
                 }
-
-                String varRefTxt = variant.chr + '_' + variant.pos + '_' + variant.ref + '_' + variant.alt
-                variant.variantRefTxt = varRefTxt
-
+                StringBuilder varRefTxt = new StringBuilder((String) variant.chr)
+                varRefTxt.append('_').append(variant.pos).append('_').append(variant.ref).append('_').append(variant.alt)
+                variant.variantRefTxt = varRefTxt.toString()
                 //variantOut.put('variant', variant)
 
                 variantList.add(variant)

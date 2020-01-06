@@ -40,11 +40,13 @@ abstract class InfoParser {
             throw new IllegalArgumentException("This INFO string does not have the " + getInfoId() + " id.")
         }
         // split by " 'id'= "
-        infos = infoString.split(getInfoId() + "=")
-        def listOfAnnMap = []
+        StringBuilder strSeparator = new StringBuilder(getInfoId())
+        strSeparator.append('=')
+        infos = infoString.split(strSeparator.toString())
         if (infos.size() > 1) {
             // split string by commas: a comma in the jannovar string separates multiple transcripts
             String[] functAnnotations = infos[1].split(';')[0].split(',')
+            List<Map> listOfAnnMap = new ArrayList<Map>(functAnnotations.size())
             for (int i = 0; i < functAnnotations.size(); i++) {
                 String[] infoAnnArray = functAnnotations[i].split("\\|", -1)
                 if (infoAnnArray.size() != getInfoLength()) {
@@ -56,8 +58,9 @@ abstract class InfoParser {
                 }
                 listOfAnnMap.add(annMap)
             }
+            return listOfAnnMap
         }
-        return listOfAnnMap
+        return null
     }
 
     /**
