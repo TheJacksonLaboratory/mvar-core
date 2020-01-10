@@ -35,7 +35,7 @@ abstract class InfoParser {
      * @param infoString string to be parsed
      * @return
      */
-    Object parse(String infoString) {
+    List<Map> parse(String infoString) {
         if (!infoString.contains(getInfoId())) {
             throw new IllegalArgumentException("This INFO string does not have the " + getInfoId() + " id.")
         }

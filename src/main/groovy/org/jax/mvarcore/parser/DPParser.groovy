@@ -11,7 +11,7 @@ class DPParser extends InfoParser {
     }
 
     @Override
-    Object parse(String infoString) {
+    List<Map> parse(String infoString) {
         // split by " 'id'= "
         infos = infoString.split(getInfoId() + "=")
         def dpMap = [:]
@@ -19,7 +19,7 @@ class DPParser extends InfoParser {
             def val = infos[1].split(';')[0]
             dpMap[getAnnotationKeys().get(0)] = val
         }
-        return dpMap
+        return new ArrayList<Map> (dpMap)
     }
 
     @Override

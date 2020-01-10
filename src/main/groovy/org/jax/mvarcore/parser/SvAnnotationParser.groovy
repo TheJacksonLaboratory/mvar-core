@@ -14,7 +14,7 @@ class SvAnnotationParser extends InfoParser {
      * @return
      */
     @Override
-    Object parse(String infoString) {
+    List<Map> parse(String infoString) {
         // ##INFO=<ID=SVANN,Number=1,Type=String,Description="Functional SV Annotation:'Annotation|Annotation_Impact|Gene_Name|Gene_ID|Feature_Type|Feature_ID|Transcript_BioType|ERRORS / WARNINGS / INFO'">
         return super.parse(infoString)
     }

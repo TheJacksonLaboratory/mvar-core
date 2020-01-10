@@ -22,7 +22,7 @@ class AnnotationParser extends InfoParser {
     }
 
     @Override
-    Object parse(String infoString) {
+    List<Map> parse(String infoString) {
         // Functional annotations: Allele|Annotation|Annotation_Impact|Gene_Name|Gene_ID|Feature_Type|Feature_ID|Transcript_BioType|Rank|HGVS.c|HGVS.p|cDNA.pos / cDNA.length|CDS.pos / CDS.length|AA.pos / AA.length|Distance|ERRORS / WARNINGS / INFO'
         return super.parse(infoString)
     }

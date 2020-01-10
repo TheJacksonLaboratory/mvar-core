@@ -11,7 +11,7 @@ class DP4Parser extends InfoParser {
     }
 
     @Override
-    Object parse(String infoString) {
+    List<Map> parse(String infoString) {
         // split by " 'id'= "
         infos = infoString.split(getInfoId() + "=")
         def dp4Map = [:]
@@ -28,7 +28,7 @@ class DP4Parser extends InfoParser {
             dp4Map["alt-fwd"] = dp4Info[2]
             dp4Map["alt-reverse"] = dp4Info[3]
         }
-        return dp4Map
+        return new ArrayList<Map>(dp4Map)
     }
 
     @Override
