@@ -15,6 +15,10 @@ class Variant {
     String variantRefTxt
     String parentVariantRefTxt //holds full variation change for the parent reference <chr_pos_ref_alt>  -- ref and alt is empty will have '.' as value
     boolean parentRefInd // should be set to true for GRCm38 assembly
+    String dnaHgvsNotation
+    String proteinHgvsNotation
+    String externalId
+    String externalSource
 
 
     static mapping = {
@@ -22,6 +26,7 @@ class Variant {
         chr sqlType: "char(3)"
         ref sqlType: "char(100)"
         alt sqlType: "char(100)"
+        version false
     }
 
     /**
@@ -63,7 +68,7 @@ class Variant {
 //        }
 //    }
 
-    static hasMany = [identifier : Identifier, strains: Strain, hgvs: Hgvs, transcripts: Transcript]
+    static hasMany = [strains: Strain, transcripts: Transcript]
     static hasOne = [gene: Gene]
 
     //static mappedBy = [hgvs: 'genomicRefSeqHgvs']
@@ -72,11 +77,15 @@ class Variant {
     static constraints = {
 
 //        position unique: ['assembly', 'ref', 'alt']
-        allele nullable: true
-        functionalClassCode nullable: true
+        gene nullable: true
+        functionalClassCode nullable: true, sqlType: 'text'
         accession nullable: true
         canonVarIdentifier nullable: false
         parentVariantRefTxt nullable: false
         parentRefInd nullable: false
+        externalId nullable: true
+        externalSource nullable: true
+        dnaHgvsNotation nullable: true, sqlType: 'text'
+        proteinHgvsNotation nullable: true, sqlType: 'text'
     }
 }

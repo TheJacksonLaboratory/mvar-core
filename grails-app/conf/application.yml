@@ -77,10 +77,13 @@ hibernate:
 dataSource:
     pooled: true
     jmxExport: true
+#    driverClassName: org.mariadb.jdbc.Driver
+#    dialect: org.hibernate.dialect.MariaDB53Dialect
     driverClassName: com.mysql.cj.jdbc.Driver
     dialect: org.hibernate.dialect.MySQL5InnoDBDialect
     username: mvar_core
     password: mvar_core_p@55
+    configClass: org.jax.mvarcore.FieldAccessHibernateConfiguration
 #    h2DataSource:
 #        pooled: true
 #        jmxExport: true
@@ -91,8 +94,9 @@ dataSource:
 environments:
     development:
         dataSource:
-            dbCreate: create-drop
-            url: jdbc:mysql://localhost:3306/mvar_core?autoReconnect=true&useUnicode=yes&characterEncoding=UTF-8&serverTimezone=UTC
+            dbCreate: update
+            url: jdbc:mysql://mvr-test01:3306/mvar_core?useServerPrepStmts=false&rewriteBatchedStatements=true&autoReconnect=true&useUnicode=yes&characterEncoding=UTF-8&serverTimezone=UTC
+            #url: jdbc:mysql://localhost:3306/mvar_core?autoReconnect=true&useUnicode=yes&characterEncoding=UTF-8&serverTimezone=UTC
         uploads:
             vcf: "${user.home}/MVAR/vcf_uploads"
     test:

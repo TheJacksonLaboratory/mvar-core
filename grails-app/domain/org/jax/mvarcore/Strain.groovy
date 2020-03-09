@@ -1,25 +1,22 @@
 package org.jax.mvarcore
 
-class Strain implements IMouseMineObject {
+class Strain {
 
-    String identifier
+    String primaryIdentifier
     String name
-    String description
-    String carriesAlleleSymbol
-    String carriesAlleleName
-    String carriesAlleleType
-    String carriesAlleleIdentifier
+    String attributes
 
-    static hasMany = [identifiers : Identifier]
+    static hasMany = [alleles: Allele]
 
     static constraints = {
+        primaryIdentifier nullable: false
+        primaryIdentifier unique: true
         name nullable: false
-        carriesAlleleType nullable:true
-        description nullable: true
+        attributes nullable: true
     }
 
     static mapping = {
         name index:'name_idx'
-        identifier index:'identifier_idx'
+        primaryIdentifier index:'primary_identifier_idx'
     }
 }

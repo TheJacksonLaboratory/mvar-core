@@ -1,9 +1,10 @@
 package org.jax.mvarcore
 
+import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import spock.lang.Specification
 
-class VcfFileUploadServiceSpec extends Specification implements ServiceUnitTest<VcfFileUploadService>{
+class VcfFileUploadServiceSpec extends Specification implements ServiceUnitTest<VcfFileUploadService>, DataTest {
 
     def setup() {
     }
