@@ -1,14 +1,10 @@
 package mvar.core
 
 
-import grails.rest.*
-import grails.converters.*
 import grails.validation.ValidationException
 import org.jax.mvarcore.VcfFileCommand
 import org.jax.mvarcore.VcfFileUploadService
 
-import static org.springframework.http.HttpStatus.BAD_REQUEST
-import static org.springframework.http.HttpStatus.BAD_REQUEST
 import static org.springframework.http.HttpStatus.BAD_REQUEST
 import static org.springframework.http.HttpStatus.NOT_FOUND
 import static org.springframework.http.HttpStatus.OK
