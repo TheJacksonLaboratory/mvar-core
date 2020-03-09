@@ -1,0 +1,7 @@
+import org.jax.mvarcore.Allele
+
+model {
+    Iterable<Allele> alleleList
+}
+
+json tmpl.allele(alleleList ?: [])

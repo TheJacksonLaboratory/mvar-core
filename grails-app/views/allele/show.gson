@@ -1,0 +1,7 @@
+import org.jax.mvarcore.Allele
+
+model {
+    Allele allele
+}
+
+json tmpl.allele(allele)

@@ -1,0 +1,7 @@
+import org.jax.mvarcore.Synonym
+
+model {
+    Iterable<Synonym> synonymList
+}
+
+json tmpl.synonym(synonymList ?: [])

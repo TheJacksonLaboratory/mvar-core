@@ -1,0 +1,7 @@
+import org.jax.mvarcore.Synonym
+
+model {
+    Synonym synonym
+}
+
+json g.render(synonym, [resolveTemplate: false])
