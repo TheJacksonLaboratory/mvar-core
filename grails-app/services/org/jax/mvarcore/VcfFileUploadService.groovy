@@ -14,6 +14,7 @@ import org.jax.mvarcore.parser.InfoParser
 import java.sql.Connection
 import java.sql.PreparedStatement
 import java.sql.ResultSet
+import java.sql.SQLException
 import java.sql.Statement
 import java.sql.Types
 
@@ -22,22 +23,39 @@ import java.sql.Types
 class VcfFileUploadService {
 
     def sessionFactory
-    def newTranscriptsMap
-    private final String ENSEMBL_URL = 'http://rest.ensembl.org/'
+    private def newTranscriptsMap
+    private static final String ENSEMBL_URL = 'http://rest.ensembl.org/'
 
-    String assembly
+    private static int batchSize = 1000
+
     boolean isRefAssembly
-    private final BATCH_SIZE = 10000
+    private String assembly
+
+    private static final String VARIANT_CANON_INSERT = "insert into variant_canon_identifier (version, chr, position, ref, alt, variant_ref_txt) VALUES (0,?,?,?,?,?)"
+    private static final String VARIANT_INSERT = "insert into variant (chr, position, alt, ref, type, functional_class_code, assembly, parent_ref_ind, parent_variant_ref_txt, variant_ref_txt, dna_hgvs_notation, protein_hgvs_notation, canon_var_identifier_id, gene_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+    private static final String VARIANT_STRAIN_INSERT = "insert into variant_strain (variant_strains_id, strain_id) VALUES (?, ?)"
+    private static final String VARIANT_TRANSCRIPT_INSERT = "insert into variant_transcript (variant_transcripts_id, transcript_id, most_pathogenic) VALUES (?, ?, ?)"
+
+    void loadVCF(File vcfFile, int batchSize) {
+        if (batchSize != -1) {
+            this.batchSize = batchSize
+            println("Batch size is " + batchSize)
+        }
+        loadVCF(vcfFile)
+    }
 
     void loadVCF(File vcfFile) {
 
         StopWatch stopWatch = new StopWatch()
         stopWatch.start()
 
-
         String vcfFileName = vcfFile.getName()
-        assembly = vcfFileName.substring(0, vcfFileName.indexOf("_"))
+        String[] strTmpArray = vcfFileName.split('\\.')
+        // the assembly should be the beginning of the filename followed by '.'
+        assembly = strTmpArray[0]
         isRefAssembly = isRefAssembly(assembly) ?: false
+        // the strain name should be after the assembly name after the '.' character
+        String strainName = strTmpArray[1]
 
         if (!isAcceptedAssembly(assembly.toLowerCase())) {
             //Invalid file name. Expecting assembly as the first part of the file name
@@ -46,13 +64,36 @@ class VcfFileUploadService {
 
         println("vcf File: " + vcfFileName)
         try {
-            persistData(vcfFile)
+            // get strain id
+            Long strainId = getStrainId(strainName);
+
+            persistData(vcfFile, strainId)
         } catch (Exception e) {
             e.printStackTrace()
         }
 
         println("vcf File: " + vcfFileName)
         println("Vcf file complete parsing and persistance: ${stopWatch} time: ${new Date()}")
+    }
+
+    /**
+     * We expect the strain name taken from the file name to be the same number of char as the strain
+     * name in the database
+     * @param strainName
+     * @return
+     */
+    private Long getStrainId(String strainName) {
+//        Statement selectStrainId = getConnection().createStatement();
+//        ResultSet result = selectStrainId.executeQuery("SELECT ID WHERE name LIKE " + strainName);
+//        result.next();
+//        return result.getLong("ID");
+
+        // We expect the strain name taken from the file name to be the same number of char as the strain
+        // name in the database
+        Strain strain = Strain.createCriteria().get {
+            like 'name', strainName
+        }
+        return strain.id
     }
 
     /**
@@ -68,35 +109,34 @@ class VcfFileUploadService {
      *   - external ids
      * 5. construct search doc -- TODO: possible search docs for speed querying of data in site
      * @param vcfFile
+     * @param strainId id of the strain in the Database for this file
      * @return
      */
-    private persistData(File vcfFile) {
-
-        String vcfFileName = vcfFile.getName()
-        String assembly = vcfFileName.substring(0, vcfFileName.indexOf("_"))
-
+    private persistData(File vcfFile, Long strainId) {
         //persist data by chromosome -- TODO: check potential for multi-threaded process
         //TODO: add mouse chr to config
         List<String> mouseChromosomes = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', 'X', 'Y', 'MT']
         List<String> varTypes = ['SNP', 'DEL', 'INS']
-        int batchSize = 10000
         // Map used to collect non-existing transcripts in DB
         // key : transcript id
         // value : list of 3 strings with 0 = gene id, 1 = variant id, 2 = most pathogenic
         newTranscriptsMap = [:]
+
+        innoDBSetOptions(false)
+
         for (String type : varTypes) {
             println("Variant type = " + type)
             for (String chr : mouseChromosomes) {
                 StopWatch stopWatch = new StopWatch()
                 stopWatch.start()
 
-                VCF vcfVariants = parseVcf(chr, vcfFile, type)
+                List<gngs.Variant> vcfVariants = parseVcf(chr, vcfFile, type)
                 println("CHR = " + chr + ', variant size= ' + vcfVariants.size())
 
                 //insert canonicals
                 insertCanonVariantsBatch(vcfVariants)
                 //insert variants, transcript, hgvs and relationships, and collect new transcripts not in DB
-                insertVariantsBatch(vcfVariants)
+                insertVariantsBatch(vcfVariants, strainId)
 
                 println("Chr= " + chr + " : persistance load = ${stopWatch} time: ${new Date()}")
                 stopWatch.reset()
@@ -107,14 +147,47 @@ class VcfFileUploadService {
         // add new Transcripts to DB
         loadNewTranscripts(newTranscriptsMap)
 
+        innoDBSetOptions(true)
+    }
+
+    /**
+     * Enable/Disable ForeignKey checks, autocommit and unique checks
+     * @param isEnabled
+     * @return
+     */
+    private innoDBSetOptions(boolean isEnabled) {
+        int val = isEnabled ? 1 : 0
+        PreparedStatement foreignKeyCheckStmt = connection.prepareStatement("SET FOREIGN_KEY_CHECKS = ?")
+        foreignKeyCheckStmt.setInt(1, val)
+        PreparedStatement uniqueChecksStmt = connection.prepareStatement("SET UNIQUE_CHECKS = ?")
+        uniqueChecksStmt.setInt(1, val)
+        PreparedStatement autoCommitStmt = connection.prepareStatement("SET AUTOCOMMIT = ?")
+        autoCommitStmt.setInt(1, val)
+        autoCommitStmt.execute()
+        uniqueChecksStmt.execute()
+        foreignKeyCheckStmt.execute()
+        connection.commit()
+    }
+
+    /**
+     * Disable/Enable table key
+     * @param tableName
+     * @param isEnabled
+     * @return
+     */
+    private setTableKeyOnOff(String tableName, boolean isEnabled) {
+        String cmd = isEnabled ? "ALTER TABLE " + tableName + " ENABLE KEYS" : "ALTER TABLE "+ tableName + " DISABLE KEYS"
+        PreparedStatement preparedStmt = connection.prepareStatement(cmd)
+        preparedStmt.execute()
+        connection.commit()
     }
 
     /**
      * Insert Canonicals in batch
-     * @param vcf parsed vcf object
+     * @param vcf list
      * @return
      */
-    private insertCanonVariantsBatch(VCF vcf) {
+    private insertCanonVariantsBatch(List<gngs.Variant> varList) {
         String UPDATE_CANONICAL_ID = 'update variant_canon_identifier set caid = concat(\'MCA_\', lpad(id, 14, 0)) where caid is NULL'
 
         List<gngs.Variant> batchOfVars = []
@@ -122,7 +195,6 @@ class VcfFileUploadService {
 
         StringBuilder strBuilder = new StringBuilder(8)
         String parentRefVariant, position, chromosome
-        List<gngs.Variant> varList = vcf.getVariants()
 
         int idx = 0
         for (gngs.Variant var : varList) {
@@ -134,7 +206,7 @@ class VcfFileUploadService {
             parentRefVariant = strBuilder.append(chromosome).append('_').append(position).append('_').append(var.getRef()).append('_').append(var.getAlt()).toString()
 
             batchOfParentVariantRef.add(parentRefVariant)
-            if (idx > 1 && idx % BATCH_SIZE == 0) {
+            if (idx > 1 && idx % batchSize == 0) {
                 batchInsertCannonVariantsJDBC(batchOfVars, batchOfParentVariantRef)
                 //clear batch lists
                 batchOfVars.clear()
@@ -165,19 +237,24 @@ class VcfFileUploadService {
      * @return
      */
     private batchInsertCannonVariantsJDBC(List<gngs.Variant> batchOfVars, List<String> batchOfParentVariantRef) {
-        // insert canon variant
-        PreparedStatement insertCanonVariants = connection.prepareStatement("insert into variant_canon_identifier (version, chr, position, ref, alt, variant_ref_txt) VALUES (0,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS)
 
         def foundRecs = VariantCanonIdentifier.findAllByVariantRefTxtInList(batchOfParentVariantRef)
         List<String> found = foundRecs.collect {
             it.variantRefTxt
         }
 
+        // disable keys/indices
+//        setTableKeyOnOffnOff("variant_canon_identifier", false)
+//        setTableKeyOnOffnOff("variant", false)
+
+        // insert canon variant
+        PreparedStatement insertCanonVariants = connection.prepareStatement(VARIANT_CANON_INSERT, Statement.RETURN_GENERATED_KEYS)
+
         StringBuilder strBuilder = new StringBuilder(8)
-        String parentRefVariant, chromosome, position
+        String position, chromosome, parentRefVariant
+
         int idx2 = 0
         for (gngs.Variant variant : batchOfVars) {
-
             position = variant.getInfo().OriginalStart ? variant.getInfo().OriginalStart : variant.getPos()
             chromosome = variant.getChr().replace('ch', '').replace('r', '')
             strBuilder.setLength(0)
@@ -197,29 +274,24 @@ class VcfFileUploadService {
             idx2++
         }
         insertCanonVariants.executeBatch()
+        connection.commit()
 
+        // enable keys/indices
+//        setStringtTableKeyOnOff("variant_canon_identifier", true)
+//        setStringtTableKeyOnOffeyOnOff("variant", true)
     }
 
     /**
      * Insert Variants, variants relationship (transcripts, strain) in batch
-     * @param vcf object
+     * @param vcf list
+     * @param strainId id of the strain in the Database for this file
      */
-    private void insertVariantsBatch(VCF vcf) {
+    private void insertVariantsBatch(List<gngs.Variant> varList, Long strainId) {
         List<gngs.Variant> batchOfVars = []
         List<String> batchOfParentVariantRefTxt = []
         List<String> batchOfVariantRefTxt = []
         List<String> batchOfGenes = []
         List<String> batchOfTranscripts = []
-
-        List<gngs.Variant> varList = vcf.getVariants()
-        String strain = ''
-        def header = varList.get(0).getHeader().lastHeaderLine
-        if (header.size() > 9) {
-            strain = header[9]
-        }
-        List<Strain> strainList = varList.size() > 0 ? Strain.createCriteria().list {
-            like 'name', strain + '%'
-        } : new ArrayList<Strain>()
 
         String geneName, transcriptName, parentRefVariant, variantRefTxt, annotStr, position, chromosome
         StringBuilder strBuilder = new StringBuilder(8)
@@ -230,13 +302,15 @@ class VcfFileUploadService {
             batchOfVars.add(var)
 
             // Retrieve values
+            // TODO Take into account the lift over from mm9 to mm10 when inserting original mm9 data
             position = var.getInfo().OriginalStart ? var.getInfo().OriginalStart : var.getPos()
             chromosome = var.getChr().replace('ch', '').replace('r', '')
             strBuilder.setLength(0)
             parentRefVariant = strBuilder.append(chromosome).append('_').append(position).append('_').append(var.getRef()).append('_').append(var.getAlt()).toString()
             batchOfParentVariantRefTxt.add(parentRefVariant)
-            strBuilder.setLength(0)
-            variantRefTxt = strBuilder.append(chromosome).append('_').append(position).append('_').append(var.getRef()).append('_').append(var.getAlt()).toString()
+//            strBuilder.setLength(0)
+            variantRefTxt = parentRefVariant
+//            variantRefTxt = strBuilder.append(chromosome).append('_').append(position).append('_').append(var.getRef()).append('_').append(var.getAlt()).toString()
             batchOfVariantRefTxt.add(variantRefTxt)
 
             // get jannovar info
@@ -247,8 +321,8 @@ class VcfFileUploadService {
             transcriptName = ((String)annotationParsed.get(0)["Feature_ID"]).split('\\.')[0]
             batchOfTranscripts.add(transcriptName)
 
-            if (idx > 1 && idx % BATCH_SIZE == 0) {
-                batchInsertVariantsJDBC(batchOfVars, batchOfVariantRefTxt, batchOfParentVariantRefTxt, batchOfGenes, batchOfTranscripts, strainList)
+            if (idx > 1 && idx % batchSize == 0) {
+                batchInsertVariantsJDBC(batchOfVars, batchOfVariantRefTxt, batchOfParentVariantRefTxt, batchOfGenes, batchOfTranscripts, strainId)
                 //clear batch lists
                 batchOfVars.clear()
                 batchOfParentVariantRefTxt.clear()
@@ -261,7 +335,7 @@ class VcfFileUploadService {
         }
         //last batch
         if (batchOfVars.size() > 0) {
-            batchInsertVariantsJDBC(batchOfVars, batchOfVariantRefTxt, batchOfParentVariantRefTxt, batchOfGenes, batchOfTranscripts, strainList)
+            batchInsertVariantsJDBC(batchOfVars, batchOfVariantRefTxt, batchOfParentVariantRefTxt, batchOfGenes, batchOfTranscripts, strainId)
             batchOfVars.clear()
             batchOfParentVariantRefTxt.clear()
             batchOfVariantRefTxt.clear()
@@ -271,6 +345,8 @@ class VcfFileUploadService {
         }
     }
 
+    private AnnotationParser infoParser = new AnnotationParser()
+
     /**
      * Insert variants, and relationships using JDBC
      * @param batchOfVars
@@ -278,9 +354,9 @@ class VcfFileUploadService {
      * @param batchOfParentVariantRefTxt
      * @param batchOfGenes
      * @param batchOfTranscripts
-     * @param strainList
+     * @param strainId id of the strain in the Database for this file
      */
-    private void batchInsertVariantsJDBC(List<gngs.Variant> batchOfVars, List<String> batchOfVariantRefTxt, List<String> batchOfParentVariantRefTxt, List<String> batchOfGenes, List<String> batchOfTranscripts, List<Strain> strainList) {
+    private void batchInsertVariantsJDBC(List<gngs.Variant> batchOfVars, List<String> batchOfVariantRefTxt, List<String> batchOfParentVariantRefTxt, List<String> batchOfGenes, List<String> batchOfTranscripts, Long strainId) {
 
         def foundRecs = Variant.findAllByVariantRefTxtInList(batchOfVariantRefTxt)
         List<String> found = foundRecs.collect {
@@ -292,31 +368,38 @@ class VcfFileUploadService {
         def geneSymbolRecs = Gene.findAllBySymbolInList(batchOfGenes)
         def geneSynonymRecs = Synonym.findAllByNameInList(batchOfGenes)
 
-        // directly use java PreparedStatement to get ResultSet with keys
-        PreparedStatement insertVariants = connection.prepareStatement("insert into variant (chr, position, alt, ref, type, functional_class_code, assembly, parent_ref_ind, parent_variant_ref_txt, variant_ref_txt, dna_hgvs_notation, protein_hgvs_notation, canon_var_identifier_id, gene_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS)
+        // disable keys/indices
+//        setTableKeyOnOff("variant_canon_identifier", false)
+//        setTableKeyOnOff("variant", false)
+//        setTableKeyOnOffOnOff("gene", false)
 
-        VariantCanonIdentifier canonIdentifier
-        String geneName, geneId, parentRefVariant, variantRefTxt, annotStr, chromosome, position
-        boolean isParentVariant
+        // directly use java PreparedStatement to get ResultSet with keys
+        PreparedStatement insertVariants = connection.prepareStatement(VARIANT_INSERT, Statement.RETURN_GENERATED_KEYS)
+
+        StringBuilder strBuilder = new StringBuilder(8)
         List<Map> annotationParsed
         Gene gene
-        StringBuilder strBuilder = new StringBuilder(8)
-        AnnotationParser infoParser = new AnnotationParser()
+        String position, chromosome, parentRefVariant, variantRefTxt, annotStr, geneName, geneId
+        boolean isParentVariant
+        VariantCanonIdentifier canonIdentifier
+
         int idx2 = 0
         for (gngs.Variant variant : batchOfVars) {
             // retrieve values
-            if (variant.getInfo().OriginalStart) {
-                position = variant.getInfo().OriginalStart
-                isParentVariant = false
-            } else {
-                position = variant.getPos()
-                isParentVariant = true
-            }
+            // TODO Take into account the lift over from mm9 to mm10 when inserting original mm9 data
+//            if (variant.getInfo().OriginalStart) {
+//                position = variant.getInfo().OriginalStart
+//                isParentVariant = false
+//            } else {
+            position = variant.getPos()
+            isParentVariant = true
+//            }
             chromosome = variant.getChr().replace('ch', '').replace('r', '')
             strBuilder.setLength(0)
             parentRefVariant = strBuilder.append(chromosome).append('_').append(position).append('_').append(variant.getRef()).append('_').append(variant.getAlt()).toString()
-            strBuilder.setLength(0)
-            variantRefTxt = strBuilder.append(chromosome).append('_').append(position).append('_').append(variant.getRef()).append('_').append(variant.getAlt()).toString()
+//            strBuilder.setLength(0)
+            variantRefTxt = parentRefVariant
+//            variantRefTxt = strBuilder.append(chromosome).append('_').append(position).append('_').append(variant.getRef()).append('_').append(variant.getAlt()).toString()
 
             if (found.find { it == variantRefTxt }) {
                 println(idx2 + " Existing record ID = " + variantRefTxt)
@@ -359,23 +442,27 @@ class VcfFileUploadService {
             idx2++
         }
         insertVariants.executeBatch()
+        connection.commit()
+
         ResultSet variantKeys = insertVariants.getGeneratedKeys()
 
         def transcriptsRecs = Transcript.findAllByPrimaryIdentifierInList(batchOfTranscripts)
 
         // insert Transcript/ Also the transcript/variant relationship table needs to be manually updated to contain the following column boolean : most_pathogenic
-        PreparedStatement insertVariantsByStrain = connection.prepareStatement("insert into variant_strain (variant_strains_id, strain_id) VALUES (?, ?)")
-        PreparedStatement insertVariantsByTranscript = connection.prepareStatement("insert into variant_transcript (variant_transcripts_id, transcript_id, most_pathogenic) VALUES (?, ?, ?)")
+        PreparedStatement insertVariantsByStrain = connection.prepareStatement(VARIANT_STRAIN_INSERT)
+        PreparedStatement insertVariantsByTranscript = connection.prepareStatement(VARIANT_TRANSCRIPT_INSERT)
 
+        Long variantKey
         String transcriptId
         Transcript transcript
-        Long variantKey
 
         idx2 = 0
         for (gngs.Variant variant : batchOfVars) {
 
             // retrieve values
-            position = variant.getInfo().OriginalStart ? variant.getInfo().OriginalStart : variant.getPos()
+            // TODO Take into account the lift over from mm9 to mm10 when inserting original mm9 data
+//            position = variant.getInfo().OriginalStart ? variant.getInfo().OriginalStart : variant.getPos()
+            position = variant.getPos()
             chromosome = variant.getChr().replace('ch', '').replace('r', '')
             strBuilder.setLength(0)
             variantRefTxt = strBuilder.append(chromosome).append('_').append(position).append('_').append(variant.getRef()).append('_').append(variant.getAlt()).toString()
@@ -422,35 +509,41 @@ class VcfFileUploadService {
 
                 }
                 // add variants by strain
-                for (strain in strainList) {
-                    insertVariantsByStrain.setLong(1, variantKey)
-                    insertVariantsByStrain.setLong(2, strain.id)
-                    insertVariantsByStrain.addBatch()
-                }
+                insertVariantsByStrain.setLong(1, variantKey)
+                insertVariantsByStrain.setLong(2, strainId)
+                insertVariantsByStrain.addBatch()
+
             }
             idx2++
         }
         insertVariantsByStrain.executeBatch()
         insertVariantsByTranscript.executeBatch()
+        connection.commit()
+
+        // enable keys/indices
+        setTableKeyOnOff("variant_canon_identifier", true)
+        setTableKeyOnOff("variant", true)
+        setTableKeyOnOff("gene", true)
+
     }
 
     private String concatenate(List<Map> annotations, String annotationKey) {
-        String result = ''
+        String concatenationResult = ''
         StringBuilder strBuilder = new StringBuilder(8)
         for (Map annot : annotations) {
             for (Map.Entry<String, Integer> entry : annot.entrySet()) {
                 if (entry.getKey() == annotationKey) {
-                    if (result != '') {
+                    if (concatenationResult != '') {
                         strBuilder.setLength(0)
-                        result = strBuilder.append(result).append(',').append(entry.getValue()).toString()
+                        concatenationResult = strBuilder.append(concatenationResult).append(',').append(entry.getValue()).toString()
                     } else {
-                        result = entry.getValue()
+                        concatenationResult = entry.getValue()
                     }
-                    return result
+                    return concatenationResult
                 }
             }
         }
-        return result
+        return concatenationResult
     }
 
     private getGeneBySynonyms(List<Synonym> geneSynonymRecs, String geneName) {
@@ -564,8 +657,10 @@ class VcfFileUploadService {
         }
     }
 
+    private final static String TRANSCRIPT_INSERT = "insert into transcript (primary_identifier, length, chromosome, location_start, location_end, mgi_gene_identifier, ens_gene_identifier) VALUES (?,?,?,?,?,?,?)"
+
     private batchInsertNewTranscriptsJDBC(List<TranscriptContainer> batchOfTranscripts) {
-        PreparedStatement insertTranscripts = connection.prepareStatement("insert into transcript (primary_identifier, length, chromosome, location_start, location_end, mgi_gene_identifier, ens_gene_identifier) VALUES (?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS)
+        PreparedStatement insertTranscripts = connection.prepareStatement(TRANSCRIPT_INSERT, Statement.RETURN_GENERATED_KEYS)
 
         for (TranscriptContainer transcript : batchOfTranscripts) {
             insertTranscripts.setString(1, transcript.primaryIdentifier)
@@ -583,7 +678,7 @@ class VcfFileUploadService {
         insertTranscripts.executeBatch()
         ResultSet transcriptsKeys = insertTranscripts.getGeneratedKeys()
 
-        PreparedStatement insertVariantsByTranscript = connection.prepareStatement("insert into variant_transcript (variant_transcripts_id, transcript_id, most_pathogenic) VALUES (?, ?, ?)")
+        PreparedStatement insertVariantsByTranscript = connection.prepareStatement(VARIANT_TRANSCRIPT_INSERT)
 
         Long transcriptKey
         for (TranscriptContainer transcript : batchOfTranscripts) {
@@ -642,20 +737,21 @@ class VcfFileUploadService {
             return false
     }
 
-    private VCF parseVcf(String chromosome, File vcfFile, String type) {
-        VCF vcf
+    private List<gngs.Variant> parseVcf(String chromosome, File vcfFile, String type) {
+        List<gngs.Variant> varList
         try {
             //vcfFileInputStream.line
-            vcf = VCF.parse(vcfFile.getPath()) { v ->
+            VCF vcf = VCF.parse(vcfFile.getPath()) { v ->
                 (v.chr == 'chr' + chromosome || v.chr == chromosome) && v.type == type
             }
+            varList = vcf.getVariants()
+            println("parsed variants = " + vcf.getVariants().size())
         } catch (Exception e) {
-
             String error = "Error reading the VCF file " + e.getMessage()
             println(error)
             throw e
         }
-        return vcf
+        return varList
     }
 
 }

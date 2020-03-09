@@ -1,0 +1,4 @@
+In order to create index files for each *.gz file, run the following command:
+for file in *.gz; do
+	tabix -p vcf $file
+done
