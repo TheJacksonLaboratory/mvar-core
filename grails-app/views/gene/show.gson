@@ -4,4 +4,4 @@ model {
 	Gene gene
 }
 
-json tmpl.allele(gene)
+json tmpl.gene(gene)

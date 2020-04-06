@@ -4,5 +4,5 @@ model {
 	Iterable<Gene> geneList
 }
 
-json tmpl.allele(geneList ?: [])
+json tmpl.gene(geneList ?: [])
 

@@ -1,7 +1,0 @@
-import org.jax.mvarcore.Source
-
-model {
-	Source source
-}
-
-json tmpl.source(source)

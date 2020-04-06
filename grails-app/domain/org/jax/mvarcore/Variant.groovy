@@ -25,11 +25,10 @@ class Variant {
         parentVariantRefTxt index: true
         chr sqlType: "char(3)"
         ref sqlType: "char(100)"
-        alt sqlType: "char(100)"
         version false
     }
 
-    static hasMany = [strains: Strain, transcripts: Transcript]
+    static hasMany = [strains: Strain, transcripts: Transcript, genotypes: Genotype]
     static hasOne = [gene: Gene]
 
     static constraints = {
