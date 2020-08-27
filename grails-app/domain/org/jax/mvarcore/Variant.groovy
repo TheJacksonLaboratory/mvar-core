@@ -20,6 +20,7 @@ class Variant {
     String externalId
     String externalSource
     String strainName
+    Gene gene
 
     static mapping = {
         parentVariantRefTxt index: true
@@ -29,10 +30,11 @@ class Variant {
     }
 
     static hasMany = [strains: Strain, transcripts: Transcript, genotypes: Genotype]
-    static hasOne = [gene: Gene]
+//    static hasOne = [gene: Gene]
 
     static constraints = {
 //        position unique: ['assembly', 'ref', 'alt']
+        id size: 1..4500000000
         gene nullable: true
         functionalClassCode nullable: true, sqlType: 'text'
         assembly nullable: false

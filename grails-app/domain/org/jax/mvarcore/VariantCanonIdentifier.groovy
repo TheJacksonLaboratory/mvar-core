@@ -17,6 +17,7 @@ class VariantCanonIdentifier {
 
     static mapping = {
         variantRefTxt index: true
+        caID index: true
         chr column: 'chr', sqlType: "char(3)"
         ref column: 'ref', sqlType: "char(100)"
     }
