@@ -39,6 +39,9 @@ abstract class VariantService {
             geneList = Gene.findAllBySymbolInList(geneParams)
         }
 
+        // Chromosomes
+        def chrList = params.list('chr')
+
         //STRAINS
         def strainParams = params.list('strain')
 
@@ -86,6 +89,12 @@ abstract class VariantService {
             if (strainVariantList) {
                 and {
                     inList('id', strainVariantList.collect { it.id })
+                }
+            }
+
+            if (chrList) {
+                and {
+                    inList ('chr', chrList)
                 }
             }
 
