@@ -2,7 +2,10 @@ import org.jax.mvarcore.Variant
 
 model {
 	Iterable<Variant> variantList
+	Long variantCount
 }
 
-json tmpl.variant(variantList ?: [])
-
+json {
+	variantCount variantCount
+	variants tmpl.variant(variantList ?: [])
+}
