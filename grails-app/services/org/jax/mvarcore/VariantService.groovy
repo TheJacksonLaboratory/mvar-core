@@ -48,8 +48,8 @@ abstract class VariantService {
         List<Variant> strainVariantList = []
         if (strainParams){
             strainVariantList = Variant.createCriteria().list() {
-                createAlias("strains", "s")
-                inList ('s.name', strainParams)
+//                createAlias("strains", "s")
+                inList ('strains.name', strainParams)
             }
         }
 
@@ -125,7 +125,7 @@ abstract class VariantService {
 
             if (startPos && endPos && startPos.isNumber() && endPos.isNumber()){
                 and{
-                    between('pos', startPos.toLong(), endPos.toLong())
+                    between('position', startPos.toLong(), endPos.toLong())
                 }
             }
 

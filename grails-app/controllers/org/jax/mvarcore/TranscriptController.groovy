@@ -22,7 +22,7 @@ class TranscriptController {
 
     @ApiOperation(
             value = "Search Transcripts",
-            nickname = "transcript/query",
+            nickname = "transcript",
             produces = "application/json",
             consumes = "application/json",
             httpMethod = "GET",

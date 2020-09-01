@@ -23,7 +23,7 @@ class AlleleController {
 
     @ApiOperation(
             value = "Search Alleles",
-            nickname = "allele/query",
+            nickname = "allele",
             produces = "application/json",
             consumes = "application/json",
             httpMethod = "GET",
