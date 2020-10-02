@@ -17,6 +17,7 @@ class Variant {
     boolean parentRefInd // should be set to true for GRCm38 assembly
     String dnaHgvsNotation
     String proteinHgvsNotation
+    String impact
     String externalId
     String externalSource
     String strainName
@@ -46,6 +47,7 @@ class Variant {
         externalSource nullable: true
         dnaHgvsNotation nullable: true, sqlType: 'text'
         proteinHgvsNotation nullable: true, sqlType: 'text'
+        impact nullable: true, sqlType: 'text'
         strainName nullable: false
     }
 }
