@@ -50,6 +50,7 @@ class LoadService {
             saveGeneTranscriptsRelationships()
         }
         updateVariantTranscriptTable()
+        updateVariantStrainTable()
     }
 
     /**
@@ -82,6 +83,11 @@ class LoadService {
         saveObjects(geneList, 1000)
     }
 
+    /**
+     * Add a boolean column to the VariantTranscript relationship table
+     * to record most pathogenic variant
+     * @return
+     */
     private updateVariantTranscriptTable() {
         // if the column does not exist we create it
         def columnName = 'most_pathogenic'
@@ -90,6 +96,19 @@ class LoadService {
             Statement updateTableStmt = connection.createStatement()
             updateTableStmt.executeUpdate("ALTER TABLE ${tableName} ADD COLUMN ${columnName} BOOL")
             log.debug('Table "variant_transcript" altered with new column created')
+        }
+    }
+
+    /**
+     * Add a genotype column to record genotype information for given strain
+     */
+    private updateVariantStrainTable() {
+        def columnName = 'genotype'
+        def tableName = 'variant_strain'
+        if (!columnExists(columnName, tableName)) {
+            Statement updateTableStmt = connection.createStatement()
+            updateTableStmt.executeUpdate("ALTER TABLE ${tableName} ADD COLUMN ${columnName} VARCHAR(100)")
+            log.debug('Table "variant_strain" altered with new column created')
         }
     }
 
