@@ -8,6 +8,8 @@ class Genotype {
     static hasOne = [strain: Strain, variant: Variant]
 
     static mapping = {
+        format sqlType: "char(36)"
+        data sqlType: "char(100)"
         version false
     }
     static constraints = {

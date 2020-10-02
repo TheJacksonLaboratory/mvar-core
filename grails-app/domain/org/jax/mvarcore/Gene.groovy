@@ -25,6 +25,6 @@ class Gene {
         symbol index:'symbol_idx'
     }
 
-    static hasMany = [variants: Variant, synonyms: Synonym, transcripts: Transcript]
+    static hasMany = [synonyms: Synonym, transcripts: Transcript]
 
 }
