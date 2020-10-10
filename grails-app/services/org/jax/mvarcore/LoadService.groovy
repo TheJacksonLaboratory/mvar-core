@@ -114,15 +114,11 @@ class LoadService {
 
     private boolean columnExists(String columnName, String tableName) {
         Statement showColumnStmt = connection.createStatement()
-        ResultSet showColumnRs = showColumnStmt.executeQuery("select * FROM ${tableName}")
-        // if the column does not exist we create it
-        ResultSetMetaData md = showColumnRs.getMetaData()
-        for (int i = 1; i <= md.getColumnCount(); i++) {
-            if (columnName == md.getColumnName(i)) {
-                return true
-            }
+        ResultSet showColumnRs = showColumnStmt.executeQuery("SHOW COLUMNS FROM ${tableName} LIKE '${columnName}'")
+        if (!showColumnRs.isBeforeFirst()){
+            return false
         }
-        return false
+        return true
     }
 
     private boolean tableHasValues(String tableName) {
