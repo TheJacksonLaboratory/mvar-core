@@ -47,10 +47,7 @@ abstract class VariantService {
 
         List<Variant> strainVariantList = []
         if (strainParams){
-            strainVariantList = Variant.createCriteria().list() {
-//                createAlias("strains", "s")
-                inList ('strains.name', strainParams)
-            }
+            strainVariantList = Strain.findAllByNameInList(strainParams)
         }
 
         // canonical id
@@ -88,7 +85,9 @@ abstract class VariantService {
 
             if (strainVariantList) {
                 and {
-                    inList('id', strainVariantList.collect { it.id })
+                    strains {
+                        inList('id', strainVariantList.collect { it.id })
+                    }
                 }
             }
 
