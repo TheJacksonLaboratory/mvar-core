@@ -39,8 +39,10 @@ abstract class VariantService {
             geneList = Gene.findAllBySymbolInList(geneParams)
         }
 
-        // Chromosomes
-        def chrList = params.list('chr')
+        //REGION
+        String chr = params.chr
+        String startPos = params.startPos
+        String endPos = params.endPos
 
         //STRAINS
         def strainParams = params.list('strain')
@@ -62,12 +64,10 @@ abstract class VariantService {
         //TYPE
         def varTypeList = params.list('type')
 
+        //IMPACT
+        def impactParams = params.list('impact')
         //FUNCTIONAL CLASS
         def functionalClassList = params.list('functionalClassCode')
-
-        //POSITION
-        String startPos = params.start_pos
-        String endPos = params.end_pos
 
         //CAID
         def caid = params.caid
@@ -97,9 +97,21 @@ abstract class VariantService {
                 }
             }
 
-            if (chrList) {
+            if (chr){
                 and {
-                    inList ('chr', chrList)
+                    eq('chr', chr)
+                }
+            }
+
+            if (startPos && endPos && startPos.isNumber() && endPos.isNumber()){
+                and{
+                    between('position', startPos.toLong(), endPos.toLong())
+                }
+            }
+
+            if (impactParams){
+                and {
+                    inList ('impact', impactParams)
                 }
             }
 
