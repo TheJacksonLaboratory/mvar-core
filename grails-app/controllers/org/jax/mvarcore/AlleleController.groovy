@@ -100,9 +100,10 @@ class AlleleController {
             @ApiImplicitParam(name = "offset", paramType = "query", required = false, value = "Offset value", dataType = "long"),
             @ApiImplicitParam(name = "sortBy", paramType = "query", required = false, value = "Sorting condition", dataType = "string"),
             @ApiImplicitParam(name = "sortDirection", paramType = "query", required = false, value = "asc or desc", dataType = "string"),
+            @ApiImplicitParam(name = "symbol", paramType = "query", required = false, value = "Allele symbol", dataType = "string"),
             @ApiImplicitParam(name = "name", paramType = "query", required = false, value = "Allele name", dataType = "string"),
             @ApiImplicitParam(name = "type", paramType = "query", required = false, value = "Allele type", dataType = "string"),
-            @ApiImplicitParam(name = "primary_id", paramType = "query", required = false, value = "Primary Identifier", dataType = "string"),
+            @ApiImplicitParam(name = "primary_identifier", paramType = "query", required = false, value = "Primary Identifier", dataType = "string"),
             @ApiImplicitParam(name = "applicationType", paramType = "header", required = true, defaultValue = "web", value = "Application Types", dataType = "string"),
             @ApiImplicitParam(name = "Accept-Language", paramType = "header", required = true, defaultValue = "en", value = "Accept-Language", dataType = "string")
     ])

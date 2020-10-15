@@ -34,11 +34,14 @@ abstract class AlleleService {
         //name
         def nameList = params.list('name')
 
+        // symbol
+        def symbolList = params.list('symbol')
+
         //type
         def typeList = params.list('type')
 
         // primary identifier
-        def primaryIdList = params.list('primary_id')
+        def primaryIdList = params.list('primary_identifier')
 
         //generate query
         def results = Allele.createCriteria().list ([max:max, offset:offset]) {
@@ -55,6 +58,11 @@ abstract class AlleleService {
                 }
             }
 
+            if (symbolList) {
+                and {
+                    inList('symbol', symbolList)
+                }
+            }
             if (primaryIdList) {
                 and {
                     inList('primary_identifier', primaryIdList)

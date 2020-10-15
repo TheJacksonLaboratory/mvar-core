@@ -53,6 +53,12 @@ abstract class VariantService {
         // canonical id
         def variantRefTxtList = params.list('variantRefTxt')
 
+        // allele symbol
+        def alleleParams = params.list('allele')
+        List<Allele> alleleList = []
+        if (alleleParams) {
+            alleleList = Allele.findAllBySymbolInListAndId(alleleParams)
+        }
         //TYPE
         def varTypeList = params.list('type')
 
@@ -101,6 +107,10 @@ abstract class VariantService {
                 and {
                     inList ('variantRefTxt', variantRefTxtList)
                 }
+            }
+
+            if (alleleList) {
+                // TODO
             }
 
             if (canonVarList) {
