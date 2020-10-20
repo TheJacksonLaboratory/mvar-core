@@ -151,20 +151,24 @@ abstract class VariantService {
             }
 
             //handle order by
-//            if (orderBy) {
-//                if (orderBy == 'symbol') {
-//                    gene {
-//                        order('symbol', orderDirection)
-//                    }
-//                } else if (orderBy == 'strainId') {
-//                    strain {
-//                        order('sampleId', orderDirection)
-//                    }
-//                } else{
-//                    order(orderBy, orderDirection)
-//                }
-//
-//            }
+            if (orderBy) {
+                if (orderBy == 'symbol') {
+                    gene {
+                        order('symbol', orderDirection)
+                    }
+                } else if (orderBy == 'pos' || orderBy =='hgvs') {
+                    canonVarIdentifier {
+                        order('position', orderDirection)
+                    }
+                } else if (orderBy == 'caid') {
+                    canonVarIdentifier {
+                        order('caID', orderDirection)
+                    }
+                } else {
+                    order(orderBy, orderDirection)
+                }
+
+            }
         }
 
         Long count = results.totalCount
