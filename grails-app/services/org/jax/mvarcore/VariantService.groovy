@@ -66,8 +66,8 @@ abstract class VariantService {
 
         //IMPACT
         def impactParams = params.list('impact')
-        //FUNCTIONAL CLASS
-        def functionalClassList = params.list('functionalClassCode')
+        //FUNCTIONAL CLASS / sequence ontology / annotation
+        def functionalClassList = params.list('annotation')
 
         //CAID
         def caid = params.caid
@@ -139,9 +139,12 @@ abstract class VariantService {
             }
 
             if (functionalClassList){
-                and {
-                    inList('functionalClassCode', functionalClassList)
+                for(String functionalClass : functionalClassList) {
+                    and {
+                        ilike('functionalClassCode', '%' + functionalClass + '%')
+                    }
                 }
+
             }
 
             if (startPos && endPos && startPos.isNumber() && endPos.isNumber()){

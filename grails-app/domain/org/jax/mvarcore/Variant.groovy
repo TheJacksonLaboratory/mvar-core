@@ -25,6 +25,7 @@ class Variant {
 
     static mapping = {
         parentVariantRefTxt index: true
+        functionalClassCode index: true
         chr sqlType: "char(3)"
         ref sqlType: "char(100)"
         version false

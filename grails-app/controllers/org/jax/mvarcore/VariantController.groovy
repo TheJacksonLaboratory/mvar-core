@@ -70,9 +70,9 @@ class VariantController implements GrailsConfigurationAware {
             @ApiImplicitParam(name = "variantRefTxt", paramType = "query", required = false, value = "Variant canonical Id", dataType = "string"),
             @ApiImplicitParam(name = "caid", paramType = "query", required = false, value = "MVAR id: MCA_*", dataType = "string"),
             @ApiImplicitParam(name = "type", paramType = "query", required = false, value = "Variant type: can be SNP, INS or DEL", dataType = "string"),
-            @ApiImplicitParam(name = "functionalClassCode", paramType = "query", required = false, value = "Functional Class Code", dataType = "string"),
-            @ApiImplicitParam(name = "start_pos", paramType = "query", required = false, value = "Starting position", dataType = "integer"),
-            @ApiImplicitParam(name = "end_pos", paramType = "query", required = false, value = "Ending position", dataType = "integer"),
+            @ApiImplicitParam(name = "annotation", paramType = "query", required = false, value = "Sequence Ontology name", dataType = "string"),
+            @ApiImplicitParam(name = "startPos", paramType = "query", required = false, value = "Starting position", dataType = "integer"),
+            @ApiImplicitParam(name = "endPos", paramType = "query", required = false, value = "Ending position", dataType = "integer"),
             @ApiImplicitParam(name = "applicationType", paramType = "header", required = true, defaultValue = "web", value = "Application Types", dataType = "string"),
             @ApiImplicitParam(name = "Accept-Language", paramType = "header", required = true, defaultValue = "en", value = "Accept-Language", dataType = "string")
     ])
