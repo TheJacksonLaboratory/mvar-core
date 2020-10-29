@@ -1,6 +1,7 @@
 package org.jax.mvarcore
 
-import grails.validation.ValidationException
+
+import grails.rest.*
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiImplicitParam
 import io.swagger.annotations.ApiImplicitParams
@@ -8,25 +9,23 @@ import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiResponse
 import io.swagger.annotations.ApiResponses
 
-import static org.springframework.http.HttpStatus.*
-
-@Api(value = "/api/v1", tags = ["strain"], description = "Strain Api's")
-class StrainController {
+@Api(value = "/api/v1", tags = ["sequenceOntology"], description = "Sequence Ontology Api's")
+class SequenceOntologyController {
 
     static namespace = "v1"
 
-    StrainService strainService
+    SequenceOntologyService sequenceOntologyService
 
     static responseFormats = ['json', 'xml']
     static allowedMethods = [save: "POST", update: "PUT", delete: "DELETE"]
 
     @ApiOperation(
-            value = "Search Strains",
-            nickname = "strain",
+            value = "Search Sequence Ontology",
+            nickname = "sequenceOntology",
             produces = "application/json",
             consumes = "application/json",
             httpMethod = "GET",
-            response = Strain.class
+            response = SequenceOntology.class
     )
     @ApiResponses([
             @ApiResponse(code = 405,
@@ -36,8 +35,8 @@ class StrainController {
                     message = "Method Not Found")
     ])
     @ApiImplicitParams([
-            @ApiImplicitParam(name = "max", paramType = "query", required = false, value = "Max number of results", dataType = "integer"),
-            @ApiImplicitParam(name = "name", paramType = "query", required = false, value = "Strain name", dataType = "string"),
+            @ApiImplicitParam(name = "name", paramType = "query", required = false, value = "Sequence Ontology name", dataType = "string"),
+            @ApiImplicitParam(name = "definition", paramType = "query", required = false, value = "Sequence Ontology definition", dataType = "string"),
             @ApiImplicitParam(name = "applicationType", paramType = "header", required = true, defaultValue = "web", value = "Application Types", dataType = "string"),
             @ApiImplicitParam(name = "Accept-Language", paramType = "header", required = true, defaultValue = "en", value = "Accept-Language", dataType = "string")
     ])
@@ -47,28 +46,27 @@ class StrainController {
         if (params.name){
 
             def count = 0
-            List<Strain> strains = []
+            List<SequenceOntology> sequenceOntologies = []
 
-            count = Strain.countByNameLike('%'+ params.name +'%')
-            log.info("strain count = " + count)
-            strains =  Strain.findAllByNameLike('%'+ params.name +'%', [max: 10])
+            count = SequenceOntology.countByNameLike('%'+ params.name +'%')
+            log.info("sequence ontology count = " + count)
+            sequenceOntologies =  SequenceOntology.findAllByNameLike('%'+ params.name +'%', [max: 10])
 
-            render(view: 'index', model: [strainList: strains, strainCount: count])
+            render(view: 'index', model: [sequenceOntologyList: sequenceOntologies, sequenceOntologyCount: count])
             return
 
         }
 
-        render (view:'index', model:[strainList: strainService.list(params), strainCount: strainService.count()])
-
+        render (view:'index', model:[sequenceOntologyList: sequenceOntologyService.list(params), sequenceOntologyCount: sequenceOntologyService.count()])
     }
 
     @ApiOperation(
-            value = "List Strains",
-            nickname = "strain/id",
+            value = "List Sequence Ontology",
+            nickname = "sequenceOntology/id",
             produces = "application/json",
             consumes = "application/json",
             httpMethod = "GET",
-            response = Strain.class
+            response = SequenceOntology.class
     )
     @ApiResponses([
             @ApiResponse(code = 405,
@@ -78,21 +76,21 @@ class StrainController {
                     message = "Method Not Found")
     ])
     @ApiImplicitParams([
-            @ApiImplicitParam(name = "id", paramType = "path", required = true, value = "Strain Id", dataType = "string"),
+            @ApiImplicitParam(name = "id", paramType = "path", required = true, value = "Sequence ontology Id", dataType = "string"),
             @ApiImplicitParam(name = "applicationType", paramType = "header", required = true, defaultValue = "web", value = "Application Types", dataType = "string"),
             @ApiImplicitParam(name = "Accept-Language", paramType = "header", required = true, defaultValue = "en", value = "Accept-Language", dataType = "string")
     ])
     def show(Long id) {
-        respond strainService.get(id)
+        respond sequenceOntologyService.get(id)
     }
 
     @ApiOperation(
-            value = "Query Strains",
-            nickname = "strain/query",
+            value = "Query Sequence Ontology",
+            nickname = "sequenceOntology/query",
             produces = "application/json",
             consumes = "application/json",
             httpMethod = "GET",
-            response = Strain.class
+            response = SequenceOntology.class
     )
     @ApiResponses([
             @ApiResponse(code = 405,
@@ -106,9 +104,8 @@ class StrainController {
             @ApiImplicitParam(name = "offset", paramType = "query", required = false, value = "Offset value", dataType = "long"),
             @ApiImplicitParam(name = "sortBy", paramType = "query", required = false, value = "Sorting condition", dataType = "string"),
             @ApiImplicitParam(name = "sortDirection", paramType = "query", required = false, value = "asc or desc", dataType = "string"),
-            @ApiImplicitParam(name = "name", paramType = "query", required = false, value = "Strain name", dataType = "string"),
-            @ApiImplicitParam(name = "attributes", paramType = "query", required = false, value = "Strain attributes: 'inbred strain' for instance", dataType = "string"),
-            @ApiImplicitParam(name = "primary_id", paramType = "query", required = false, value = "Strain Primary Identifier", dataType = "string"),
+            @ApiImplicitParam(name = "name", paramType = "query", required = false, value = "Sequence Ontology name", dataType = "string"),
+            @ApiImplicitParam(name = "definition", paramType = "query", required = false, value = "Sequence Ontology definition", dataType = "string"),
             @ApiImplicitParam(name = "applicationType", paramType = "header", required = true, defaultValue = "web", value = "Application Types", dataType = "string"),
             @ApiImplicitParam(name = "Accept-Language", paramType = "header", required = true, defaultValue = "en", value = "Accept-Language", dataType = "string")
     ])
@@ -119,51 +116,8 @@ class StrainController {
             return
         }
         log.info("params =" + params)
-        Map<String, Object> queryResults = strainService.query(params)
-        log.info('results strain count =' + queryResults.strainCount)
-        render(view: 'index', model: [strainList: queryResults.strainList, strainCount: queryResults.strainCount])
-    }
-
-    def save(Strain strain) {
-        if (strain == null) {
-            render status: NOT_FOUND
-            return
-        }
-
-        try {
-            strainService.save(strain)
-        } catch (ValidationException e) {
-            respond strain.errors, view:'create'
-            return
-        }
-
-        respond strain, [status: CREATED, view:"show"]
-    }
-
-    def update(Strain strain) {
-        if (strain == null) {
-            render status: NOT_FOUND
-            return
-        }
-
-        try {
-            strainService.save(strain)
-        } catch (ValidationException e) {
-            respond strain.errors, view:'edit'
-            return
-        }
-
-        respond strain, [status: OK, view:"show"]
-    }
-
-    def delete(Long id) {
-        if (id == null) {
-            render status: NOT_FOUND
-            return
-        }
-
-        strainService.delete(id)
-
-        render status: NO_CONTENT
+        Map<String, Object> queryResults = sequenceOntologyService.query(params)
+        log.info('results sequence ontology count =' + queryResults.sequenceOntologyCount)
+        render(view: 'index', model: [sequenceOntologyList: queryResults.sequenceOntologyList, sequenceOntologyCount: queryResults.sequenceOntologyCount])
     }
 }

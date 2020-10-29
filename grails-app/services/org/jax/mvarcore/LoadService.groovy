@@ -50,6 +50,7 @@ class LoadService {
             saveGeneTranscriptsRelationships()
         }
         updateVariantTranscriptTable()
+        updateVariantStrainTable()
     }
 
     /**
@@ -82,6 +83,11 @@ class LoadService {
         saveObjects(geneList, 1000)
     }
 
+    /**
+     * Add a boolean column to the VariantTranscript relationship table
+     * to record most pathogenic variant
+     * @return
+     */
     private updateVariantTranscriptTable() {
         // if the column does not exist we create it
         def columnName = 'most_pathogenic'
@@ -93,17 +99,26 @@ class LoadService {
         }
     }
 
+    /**
+     * Add a genotype column to record genotype information for given strain
+     */
+    private updateVariantStrainTable() {
+        def columnName = 'genotype'
+        def tableName = 'variant_strain'
+        if (!columnExists(columnName, tableName)) {
+            Statement updateTableStmt = connection.createStatement()
+            updateTableStmt.executeUpdate("ALTER TABLE ${tableName} ADD COLUMN ${columnName} VARCHAR(100)")
+            log.debug('Table "variant_strain" altered with new column created')
+        }
+    }
+
     private boolean columnExists(String columnName, String tableName) {
         Statement showColumnStmt = connection.createStatement()
-        ResultSet showColumnRs = showColumnStmt.executeQuery("select * FROM ${tableName}")
-        // if the column does not exist we create it
-        ResultSetMetaData md = showColumnRs.getMetaData()
-        for (int i = 1; i <= md.getColumnCount(); i++) {
-            if (columnName == md.getColumnName(i)) {
-                return true
-            }
+        ResultSet showColumnRs = showColumnStmt.executeQuery("SHOW COLUMNS FROM ${tableName} LIKE '${columnName}'")
+        if (!showColumnRs.isBeforeFirst()){
+            return false
         }
-        return false
+        return true
     }
 
     private boolean tableHasValues(String tableName) {

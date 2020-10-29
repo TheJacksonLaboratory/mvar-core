@@ -1,0 +1,8 @@
+import org.jax.mvarcore.SequenceOntology
+
+model {
+	Iterable<SequenceOntology> sequenceOntologyList
+}
+
+json tmpl.sequenceOntology(sequenceOntologyList ?: [])
+

@@ -17,22 +17,26 @@ class Variant {
     boolean parentRefInd // should be set to true for GRCm38 assembly
     String dnaHgvsNotation
     String proteinHgvsNotation
+    String impact
     String externalId
     String externalSource
     String strainName
+    Gene gene
 
     static mapping = {
         parentVariantRefTxt index: true
+        functionalClassCode index: true
         chr sqlType: "char(3)"
         ref sqlType: "char(100)"
         version false
     }
 
     static hasMany = [strains: Strain, transcripts: Transcript, genotypes: Genotype]
-    static hasOne = [gene: Gene]
+//    static hasOne = [gene: Gene]
 
     static constraints = {
 //        position unique: ['assembly', 'ref', 'alt']
+        id size: 1..4500000000
         gene nullable: true
         functionalClassCode nullable: true, sqlType: 'text'
         assembly nullable: false
@@ -44,6 +48,7 @@ class Variant {
         externalSource nullable: true
         dnaHgvsNotation nullable: true, sqlType: 'text'
         proteinHgvsNotation nullable: true, sqlType: 'text'
+        impact nullable: true, sqlType: 'text'
         strainName nullable: false
     }
 }

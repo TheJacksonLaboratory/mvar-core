@@ -1,0 +1,7 @@
+import org.jax.mvarcore.SequenceOntology
+
+model {
+	SequenceOntology sequenceOntology
+}
+
+json tmpl.sequenceOntology(sequenceOntology)

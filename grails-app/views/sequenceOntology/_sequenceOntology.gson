@@ -1,0 +1,7 @@
+import org.jax.mvarcore.SequenceOntology
+
+model {
+	SequenceOntology sequenceOntology
+}
+
+json g.render(sequenceOntology, [resolveTemplate: false])

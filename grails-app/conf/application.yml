@@ -11,11 +11,13 @@ grails:
             # Whether to translate GORM events into Reactor events
             # Disabled by default for performance reasons
             events: false
+    cors:
+        enabled: true
 info:
     app:
-        name: '@info.app.name@'
-        version: '@info.app.version@'
-        grailsVersion: '@info.app.grailsVersion@'
+        name: 'mvar'
+        version: '0.1'
+        grailsVersion: '3.3.9'
 spring:
     main:
         banner-mode: "off"
@@ -81,8 +83,8 @@ dataSource:
 #    dialect: org.hibernate.dialect.MariaDB53Dialect
     driverClassName: com.mysql.cj.jdbc.Driver
     dialect: org.hibernate.dialect.MySQL5InnoDBDialect
-    username: changeme
-    password: changeme
+    username: mvar_core
+    password: mvar_core_p@55
     configClass: org.jax.mvarcore.FieldAccessHibernateConfiguration
 #    h2DataSource:
 #        pooled: true
@@ -106,22 +108,25 @@ environments:
     production:
         dataSource:
             dbCreate: none
-            url: jdbc:h2:./prodDb;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
-            properties:
-                jmxEnabled: true
-                initialSize: 5
-                maxActive: 50
-                minIdle: 5
-                maxIdle: 25
-                maxWait: 10000
-                maxAge: 600000
-                timeBetweenEvictionRunsMillis: 5000
-                minEvictableIdleTimeMillis: 60000
-                validationQuery: SELECT 1
-                validationQueryTimeout: 3
-                validationInterval: 15000
-                testOnBorrow: true
-                testWhileIdle: true
-                testOnReturn: false
-                jdbcInterceptors: ConnectionState
-                defaultTransactionIsolation: 2 # TRANSACTION_READ_COMMITTED
+            url: jdbc:mysql://localhost:3306/mvar_core?cachePrepStmts=true&prepStmtCacheSize=350&prepStmtCacheSqlLimit=2048&useServerPrepStmts=true&rewriteBatchedStatements=true&autoReconnect=true&useUnicode=yes&characterEncoding=UTF-8&serverTimezone=UTC
+        uploads:
+            vcf: "${user.home}/MVAR/vcf_uploads"
+#            url: jdbc:h2:./prodDb;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
+#            properties:
+#                jmxEnabled: true
+#                initialSize: 5
+#                maxActive: 50
+#                minIdle: 5
+#                maxIdle: 25
+#                maxWait: 10000
+#                maxAge: 600000
+#                timeBetweenEvictionRunsMillis: 5000
+#                minEvictableIdleTimeMillis: 60000
+#                validationQuery: SELECT 1
+#                validationQueryTimeout: 3
+#                validationInterval: 15000
+#                testOnBorrow: true
+#                testWhileIdle: true
+#                testOnReturn: false
+#                jdbcInterceptors: ConnectionState
+#                defaultTransactionIsolation: 2 # TRANSACTION_READ_COMMITTED
