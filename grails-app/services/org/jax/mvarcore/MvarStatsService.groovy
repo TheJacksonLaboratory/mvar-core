@@ -32,7 +32,7 @@ class MvarStatsService {
             stat.variantCanonIdentifierCount = result.variant_canon_identifier_count[0]
 
         } catch (SQLException exc) {
-
+            log.debug('The following SQLException occurred: ' + exc.toString())
         } finally {
             cleanUpGorm()
         }
@@ -44,7 +44,7 @@ class MvarStatsService {
             stat.strainAnalysisCount = resultStrain.strain_num[0]
 
         } catch (SQLException exc) {
-
+            log.debug('The following SQLException occurred: ' + exc.toString())
         } finally {
             cleanUpGorm()
         }
@@ -54,45 +54,11 @@ class MvarStatsService {
             stat.transcriptAnalysisCount = resultTranscript.transcript_num[0]
 
         } catch (SQLException exc) {
-
+            log.debug('The following SQLException occurred: ' + exc.toString())
         } finally {
             cleanUpGorm()
         }
 
-        def list = []
-        list << stat
-        return list
-    }
-
-    def analysis(){
-
-        // MVAR analysis info : when analysis is sent as a query in the url of the MVArStats endpoint
-        // we query the relationship tables variantTranscript and variantStrain and check how many
-        // unique strains there are and how many unique transcripts
-        def result
-        MvarStats stat = new MvarStats()
-        // search for distinct strains
-        try {
-            final Sql sql = getSql()
-            result = sql.rows("SELECT count(distinct strain_id) as strain_num FROM mvar_core.variant_strain;")
-            stat.strainAnalysisCount = result.strain_num[0]
-
-        } catch (SQLException exc) {
-
-        } finally {
-            cleanUpGorm()
-        }
-        // search for distinct transcripts
-        try {
-            final Sql sql = getSql()
-            result = sql.rows("SELECT count(distinct transcript_id) as transcript_num FROM mvar_core.variant_transcript;")
-            stat.transcriptAnalysisCount = result.transcript_num[0]
-
-        } catch (SQLException exc) {
-
-        } finally {
-            cleanUpGorm()
-        }
         def list = []
         list << stat
         return list
