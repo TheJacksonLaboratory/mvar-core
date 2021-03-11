@@ -15,6 +15,7 @@ class Variant {
     String variantRefTxt
     String parentVariantRefTxt //holds full variation change for the parent reference <chr_pos_ref_alt>  -- ref and alt is empty will have '.' as value
     boolean parentRefInd // should be set to true for GRCm38 assembly
+    String variantHgvsNotation
     String dnaHgvsNotation
     String proteinHgvsNotation
     String impact
@@ -46,6 +47,7 @@ class Variant {
         parentRefInd nullable: false
         externalId nullable: true
         externalSource nullable: true
+        variantHgvsNotation nullable: true
         dnaHgvsNotation nullable: true, sqlType: 'text'
         proteinHgvsNotation nullable: true, sqlType: 'text'
         impact nullable: true, sqlType: 'text'
