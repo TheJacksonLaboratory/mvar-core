@@ -1,0 +1,8 @@
+import org.jax.mvarcore.MvarStats
+
+model {
+	Iterable<MvarStats> mvarStatsList
+}
+
+json tmpl.mvarStats(mvarStatsList ?: [])
+

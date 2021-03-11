@@ -1,4 +1,5 @@
 import org.jax.mvarcore.DBFeedUtil
+import org.jax.mvarcore.MvarStatsService
 import org.jax.mvarcore.VcfFileUploadRunner
 
 // Place your Spring DSL code here
@@ -10,4 +11,8 @@ beans = {
     }
     // Register vcfFileUploadRunner as spring bean
     vcfFileUploadRunner(VcfFileUploadRunner)
+    // mvarStats Spring bean
+    mvarStatsService(MvarStatsService) {
+        sessionFactory = ref('sessionFactory')
+    }
 }

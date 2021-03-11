@@ -29,6 +29,7 @@ class UrlMappings {
         "/variantCanonIdendifier/query" (controller: 'variantCanonIdendifier', method: "GET", action: 'query')
         "/transcript/query" (controller: 'transcript', method: "GET", action: 'query')
         "/strain/query" (controller: 'strain', method: "GET", action: 'query')
+        "/mvarStats" (controller: 'mvarStats', method: "GET")
 
 //        "variantCanonIdentifier/query" (controller: 'variantCanonIdentifier', method: "GET", action: 'query')
 //        "strain/query" (controller: 'strain', method: "GET", action: 'query')
