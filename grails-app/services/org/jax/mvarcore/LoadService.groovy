@@ -103,13 +103,22 @@ class LoadService {
      * Add a genotype column to record genotype information for given strain
      */
     private updateVariantStrainTable() {
-        def columnName = 'genotype'
         def tableName = 'variant_strain'
-        if (!columnExists(columnName, tableName)) {
+        // This column is used to store the GT id of the genotype format column in a VCF file
+        def genoColumnName = 'genotype'
+        if (!columnExists(genoColumnName, tableName)) {
             Statement updateTableStmt = connection.createStatement()
-            updateTableStmt.executeUpdate("ALTER TABLE ${tableName} ADD COLUMN ${columnName} VARCHAR(100)")
-            log.debug('Table "variant_strain" altered with new column created')
+            updateTableStmt.executeUpdate("ALTER TABLE ${tableName} ADD COLUMN ${genoColumnName} CHAR(4)")
+            log.debug('New column ' + genoColumnName + ' created in table variant_strain')
         }
+        // This column is used to store all the other info of the genotype in the format column of the VCF file
+        def genoDataColumnName = 'genotype_data'
+        if (!columnExists(genoDataColumnName, tableName)) {
+            Statement updateTableStmt = connection.createStatement()
+            updateTableStmt.executeUpdate("ALTER TABLE ${tableName} ADD COLUMN ${genoDataColumnName} VARCHAR(100)")
+            log.debug('New column ' + genoDataColumnName + ' created in table variant_strain')
+        }
+
     }
 
     private boolean columnExists(String columnName, String tableName) {
