@@ -45,12 +45,7 @@ abstract class VariantService {
         String endPos = params.endPos
 
         //STRAINS
-        def strainParams = params.list('strain')
-
-        List<Variant> strainVariantList = []
-        if (strainParams){
-            strainVariantList = Strain.findAllByNameInList(strainParams)
-        }
+        List<String> strainParams = params.list('strain')
 
         // canonical id
         def variantRefTxtList = params.list('variantRefTxt')
@@ -89,10 +84,20 @@ abstract class VariantService {
                 }
             }
 
-            if (strainVariantList) {
+
+            if (strainParams) {
+
                 and {
-                    strains {
-                        inList('id', strainVariantList.collect { it.id })
+                    variantStrains {
+                        and {
+                            strain {
+                                inList('name', strainParams)
+                            }
+                            not{
+                                eq('genotype', './.')
+                                eq('genotype', '0/0')
+                            }
+                        }
                     }
                 }
             }
@@ -175,7 +180,6 @@ abstract class VariantService {
         }
 
         Long count = results.totalCount
-
         println("variant search results count = " + count)
         log.info("variant search results count = " + count)
 
