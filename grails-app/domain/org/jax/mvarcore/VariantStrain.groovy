@@ -12,8 +12,6 @@ class VariantStrain {
     }
 
     static mapping = {
-//        strain index: 'strain_genotype_idx'
-//        genotype index: 'strain_genotype_idx', sqlType: "varchar(4)"
         version false
     }
 }
