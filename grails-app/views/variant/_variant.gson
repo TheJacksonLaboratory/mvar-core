@@ -4,4 +4,4 @@ model {
 	Variant variant
 }
 
-json g.render(variant, [deep:true, resolveTemplate: false])
+json g.render(variant, [deep: true, excludes: ['variantStrains'], resolveTemplate: false])

@@ -32,7 +32,7 @@ class Variant {
         version false
     }
 
-    static hasMany = [strains: Strain, transcripts: Transcript, genotypes: Genotype]
+    static hasMany = [variantStrains: VariantStrain, transcripts: Transcript, genotypes: Genotype]
 //    static hasOne = [gene: Gene]
 
     static constraints = {

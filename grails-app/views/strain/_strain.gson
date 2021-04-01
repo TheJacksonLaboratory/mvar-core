@@ -4,4 +4,4 @@ model {
 	Strain strain
 }
 
-json g.render(strain, [resolveTemplate: false])
+json g.render(strain, [deep:false, excludes: ['variantStrains'], resolveTemplate: false])

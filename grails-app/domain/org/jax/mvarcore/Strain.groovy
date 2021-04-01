@@ -6,7 +6,7 @@ class Strain {
     String name
     String attributes
 
-    static hasMany = [alleles: Allele, genotypes: Genotype]
+    static hasMany = [variantStrains: VariantStrain, alleles: Allele, genotypes: Genotype]
 
     static constraints = {
         primaryIdentifier nullable: false
