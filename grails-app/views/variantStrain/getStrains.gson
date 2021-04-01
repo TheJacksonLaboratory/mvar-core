@@ -1,0 +1,9 @@
+import org.jax.mvarcore.Strain
+
+model {
+	Iterable<Strain> strainList
+}
+
+json {
+	strains tmpl.strain(strainList ?: [])
+}

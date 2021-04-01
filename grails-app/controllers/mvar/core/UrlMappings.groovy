@@ -26,6 +26,8 @@ class UrlMappings {
         "/allele/query" (controller: 'allele', method: "GET", action: 'query')
         "/gene/query" (controller: 'gene', method: "GET", action: 'query')
         "/variant/query" (controller: 'variant', method: "GET", action: 'query')
+        "/variantStrain/query" (controller: 'variantStrain', method: "GET", action: 'query')
+        "/variantStrain/strains" (controller: 'variantStrain', method: "GET", action: 'strainsInDB')
         "/variantCanonIdendifier/query" (controller: 'variantCanonIdendifier', method: "GET", action: 'query')
         "/transcript/query" (controller: 'transcript', method: "GET", action: 'query')
         "/strain/query" (controller: 'strain', method: "GET", action: 'query')
