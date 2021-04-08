@@ -6,6 +6,8 @@ model {
 
 json {
 	variant variant.variantRefTxt
+	ref variant.ref
+	alt variant.alt
 	gene variant.gene.symbol
 	strains tmpl.variantStrain(variant.variantStrains ?: [])
 }
