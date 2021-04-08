@@ -86,6 +86,7 @@ bootRun {
 }
 
 tasks.withType(Test) {
+    testLogging.showStandardStreams = true
     systemProperty "geb.env", System.getProperty('geb.env')
     systemProperty "geb.build.reportsDir", reporting.file("geb/integrationTest")
     systemProperty "webdriver.chrome.driver", System.getProperty('webdriver.chrome.driver')

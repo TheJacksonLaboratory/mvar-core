@@ -1,0 +1,11 @@
+import org.jax.mvarcore.Variant
+
+model {
+	Variant variant
+}
+
+json {
+	variant variant.variantRefTxt
+	gene variant.gene.symbol
+	strains tmpl.variantStrain(variant.variantStrains ?: [])
+}

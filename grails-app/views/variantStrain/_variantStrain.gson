@@ -1,0 +1,10 @@
+import org.jax.mvarcore.VariantStrain
+
+model {
+	VariantStrain variantStrain
+}
+
+json {
+	srainId variantStrain.strain.id
+	genotype variantStrain.genotype
+}
