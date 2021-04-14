@@ -5,6 +5,6 @@ model {
 }
 
 json {
-	srainId strain.id
+	id strain.id
 	strain strain.name
 }

@@ -5,6 +5,6 @@ model {
 }
 
 json {
-	srainId variantStrain.strain.id
+	id variantStrain.strain.id
 	genotype variantStrain.genotype
 }
