@@ -31,11 +31,10 @@ abstract class TranscriptService {
 
         println('query params: ' + params)
 
-        //chr
-        def chrList = params.list('chr')
-
-        //mgi gene id
-        def mgiGeneIdList = params.list('mgi_gene_id')
+        // geneName
+        def geneSymbolList = params.list('gene_symbol')
+        //mRNA id - refseq ids and genebank
+        def mRNAList = params.list('m_rna_id')
 
         // primary identifier
         def primaryIdList = params.list('primary_id')
@@ -43,15 +42,14 @@ abstract class TranscriptService {
         //generate query
         def results = Transcript.createCriteria().list ([max:max, offset:offset]) {
 
-            if (chrList) {
+            if (geneSymbolList) {
                 and {
-                    inList('chromosome', chrList)
+                    inList('gene_symbol', geneSymbolList)
                 }
             }
-
-            if (mgiGeneIdList) {
+            if (mRNAList) {
                 and {
-                    inList('mgi_gene_identifier', typeList)
+                    inList('m_rna_id', mRNAList)
                 }
             }
 
@@ -61,9 +59,9 @@ abstract class TranscriptService {
                 }
             }
 
-            //handle order by
+//            //handle order by
 //            if (orderBy) {
-//                if (orderBy == 'symbol') {
+//                if (orderBy == 'gene_symbol') {
 //                    gene {
 //                        order('symbol', orderDirection)
 //                    }

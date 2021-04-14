@@ -223,32 +223,6 @@ class LoadService {
         return mapIds
     }
 
-    private String getMgiId(String id) {
-        String[] array = id.split("_")
-        String mgiId
-        if (array.size() == 3) {
-            mgiId = array[0] + ':' + array[2]
-        } else {
-            return id
-        }
-        return mgiId
-    }
-
-    private List<String> getMgiIds(List<String> ids) {
-        List<String> mgiIds = []
-        for (id in ids) {
-            String[] array = id.split("_")
-            String mgiId
-            if (array.size() == 3) {
-                mgiId = array[0] + ':' + array[2]
-            } else {
-                mgiId = id
-            }
-            mgiIds.add(mgiId)
-        }
-        return mgiIds
-    }
-
     /**
      * persist data in batches
      * @param object List
@@ -315,7 +289,7 @@ class LoadService {
     private void saveGeneTranscriptsRelationships() {
         println("*** GENE/TRANSCRIPT LOAD **")
         log.info("*** GENE/TRANSCRIPT LOAD **")
-        List<String> batchOfGenesIds = []
+        List<String> batchOfGenesSymbols = []
         List<Transcript> batchOfTranscripts = []
 
         List<Transcript> listOfTranscripts = Transcript.findAll()
@@ -323,40 +297,39 @@ class LoadService {
 
         listOfTranscripts.eachWithIndex { transcript, idx ->
             batchOfTranscripts.add(transcript)
-            batchOfGenesIds.add(transcript.mgiGeneIdentifier)
+            batchOfGenesSymbols.add(transcript.geneSymbol)
             if (idx > 1 && idx % batchSize == 0) {
 
-                batchInsertGeneTranscriptsJDBC(batchOfTranscripts, batchOfGenesIds)
+                batchInsertGeneTranscriptsJDBC(batchOfTranscripts, batchOfGenesSymbols)
                 //clear batch lists
-                batchOfGenesIds.clear()
+                batchOfGenesSymbols.clear()
                 batchOfTranscripts.clear()
                 cleanUpGorm()
             }
         }
         //last batch
         if (listOfTranscripts.size() > 0) {
-            batchInsertGeneTranscriptsJDBC(batchOfTranscripts, batchOfGenesIds)
-            batchOfGenesIds.clear()
+            batchInsertGeneTranscriptsJDBC(batchOfTranscripts, batchOfGenesSymbols)
+            batchOfGenesSymbols.clear()
             batchOfTranscripts.clear()
             cleanUpGorm()
         }
     }
 
-    private batchInsertGeneTranscriptsJDBC(List<Transcript> batchOfTranscripts, List<String> batchOfGeneIds) {
+    private batchInsertGeneTranscriptsJDBC(List<Transcript> batchOfTranscripts, List<String> batchOfGenesSymbols) {
         PreparedStatement insertGeneTranscripts = connection.prepareStatement("insert into gene_transcript (gene_transcripts_id, transcript_id) VALUES (?, ?)")
-        List<String> geneMgiIds = getMgiIds(batchOfGeneIds)
-        def recsGenes = Gene.findAllByMgiIdInList(geneMgiIds)
+        def recsGenes = Gene.findAllBySymbolInList(batchOfGenesSymbols)
         batchOfTranscripts.eachWithIndex { transcript, idx2 ->
             // add gene/transcript relationship
             Gene geneFound = recsGenes.find {
-                it.mgiId == getMgiId(transcript.mgiGeneIdentifier)
+                it.symbol == transcript.geneSymbol
             }
             if (geneFound != null) {
                 insertGeneTranscripts.setLong(1, geneFound.id)
                 insertGeneTranscripts.setLong(2, transcript.id)
                 insertGeneTranscripts.addBatch()
             } else {
-                print 'gene not found for id: ' + transcript.mgiGeneIdentifier
+                print 'gene not found for symbol: ' + transcript.geneSymbol + '\n'
             }
         }
         insertGeneTranscripts.executeBatch()
