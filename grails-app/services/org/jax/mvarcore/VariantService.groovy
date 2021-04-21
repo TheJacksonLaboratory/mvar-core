@@ -70,7 +70,8 @@ abstract class VariantService {
         if (caid) {
             canonVarList = VariantCanonIdentifier.findAllByCaID(caid)
         }
-
+        //HGVSg
+        def hgvsList = params.list('hgvs')
         // TODO support chromosome range
 
         //generate query
@@ -117,6 +118,14 @@ abstract class VariantService {
             if (impactParams){
                 and {
                     inList ('impact', impactParams)
+                }
+            }
+
+            if (hgvsList){
+                for(String hgvs : hgvsList) {
+                    and {
+                        ilike('variantHgvsNotation', '%' + hgvs + '%')
+                    }
                 }
             }
 
