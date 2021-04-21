@@ -13,6 +13,7 @@ class MvarStats {
     int variantTranscriptCount
 
     int strainAnalysisCount
+    int geneAnalysisCount
     int transcriptAnalysisCount
     
     static constraints = {
