@@ -10,18 +10,15 @@ java -Dgrails.env=development -XX:-UseGCOverheadLimit -jar mvar-core-0.1.war 2>>
 
 ## Reorder the transcript and allele tables
 
-alter table transcript modify length int(11) after primary_identifier;
-alter table transcript modify location_start bigint(20) after length;
-alter table transcript modify location_end bigint(20) after location_start;
-alter table transcript modify mgi_gene_identifier varchar(255) after location_end;
-alter table transcript modify chromosome varchar(255) after mgi_gene_identifier;
-alter table transcript modify ens_gene_identifier varchar(255) after chromosome;
+alter table transcript modify m_rna_id varchar(255) after primary_identifier;
+alter table transcript modify gene_symbol varchar(255) after m_rna_id;
+alter table transcript modify description text after gene_symbol;
 
 
 alter table allele modify type varchar(255) after id;
 alter table allele modify name varchar(255) after type;
 alter table allele modify primary_identifier varchar(255) after name;
-alter table allele modify symbol varchar(255) after primary_identifier;
+alter table allele modify symbol text after primary_identifier;
 
 
 ## Load the transcript and allele seed csv files to the DB
@@ -30,7 +27,7 @@ Make sure that the files are located in /var/lib/mysql
 
 ### Transcripts
 
-load data local infile 'transcripts_short_seed.csv' into table transcript  fields terminated by ',' optionally enclosed by '"' lines terminated by '\n' ignore 1 lines (primary_identifier, length, location_start, location_end, mgi_gene_identifier, chromosome);
+load data local infile 'transcripts_ref_noversion.csv' into table transcript  fields terminated by ',' optionally enclosed by '"' lines terminated by '\n' ignore 1 lines (primary_identifier, m_rna_id, gene_symbol, description);
 
 
 ### Alleles
