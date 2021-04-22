@@ -37,7 +37,7 @@ class MvarStatsService {
             cleanUpGorm()
         }
 
-        // search for distinct strains and transcripts
+        // search for distinct strains
         try {
             final Sql sql = getSql()
             def resultStrain = sql.rows("SELECT count(distinct strain_id) as strain_num FROM mvar_core.variant_strain;")
@@ -48,6 +48,7 @@ class MvarStatsService {
         } finally {
             cleanUpGorm()
         }
+        // search for distinct transcripts
         try {
             final Sql sql = getSql()
             def resultTranscript = sql.rows("SELECT count(distinct transcript_id) as transcript_num FROM mvar_core.variant_transcript;")
@@ -58,7 +59,17 @@ class MvarStatsService {
         } finally {
             cleanUpGorm()
         }
+        // search for distinct genes
+        try {
+            final Sql sql = getSql()
+            def resultTranscript = sql.rows("SELECT count(distinct gene_id) as gene_num FROM mvar_core.variant;")
+            stat.geneAnalysisCount = resultTranscript.gene_num[0]
 
+        } catch (SQLException exc) {
+            log.debug('The following SQLException occurred: ' + exc.toString())
+        } finally {
+            cleanUpGorm()
+        }
         def list = []
         list << stat
         return list
