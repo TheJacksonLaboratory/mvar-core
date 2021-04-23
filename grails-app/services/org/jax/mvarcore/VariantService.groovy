@@ -65,10 +65,10 @@ abstract class VariantService {
         def functionalClassList = params.list('annotation')
 
         //CAID
-        def caid = params.caid
+        def mvarId = params.mvarId
         List<VariantCanonIdentifier> canonVarList = []
-        if (caid) {
-            canonVarList = VariantCanonIdentifier.findAllByCaID(caid)
+        if (mvarId) {
+            canonVarList = VariantCanonIdentifier.findAllByCaID(mvarId)
         }
         //HGVSg
         def hgvsParam = params.hgvs

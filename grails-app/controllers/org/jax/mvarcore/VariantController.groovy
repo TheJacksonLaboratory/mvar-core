@@ -68,7 +68,7 @@ class VariantController implements GrailsConfigurationAware {
             @ApiImplicitParam(name = "gene", paramType = "query", required = false, value = "Gene symbol", dataType = "string"),
             @ApiImplicitParam(name = "strain", paramType = "query", required = false, value = "Strain name", dataType = "string"),
             @ApiImplicitParam(name = "variantRefTxt", paramType = "query", required = false, value = "Variant canonical Id", dataType = "string"),
-            @ApiImplicitParam(name = "caid", paramType = "query", required = false, value = "MVAR id: MCA_*", dataType = "string"),
+            @ApiImplicitParam(name = "mvarId", paramType = "query", required = false, value = "MVAR id: MCA_*", dataType = "string"),
             @ApiImplicitParam(name = "type", paramType = "query", required = false, value = "Variant type: can be SNP, INS or DEL", dataType = "string"),
             @ApiImplicitParam(name = "annotation", paramType = "query", required = false, value = "Sequence Ontology name", dataType = "string"),
             @ApiImplicitParam(name = "hgvs", paramType = "query", required = false, value = "HGVS genomic nomenclature"),
