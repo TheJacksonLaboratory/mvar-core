@@ -72,7 +72,6 @@ abstract class VariantService {
         }
         //HGVSg
         def hgvsParam = params.hgvs
-        // TODO support chromosome range
 
         //generate query
         def results = Variant.createCriteria().list ([max:max, offset:offset]) {
