@@ -58,7 +58,8 @@ class VariantStrainController {
         def impactsMap = [impacts: params.list('impact')]
         def consequencesMap = [consequences:  params.list('consequence')]
         def hgvsMap = [hgvsList:  params.list('hgvs')]
-        def paramsMap = genesMap + varTypesMap + impactsMap + consequencesMap + hgvsMap + params
+        def mvarIdMap = [mvarIdList: params.list('mvarId')]
+        def paramsMap = genesMap + varTypesMap + impactsMap + consequencesMap + hgvsMap + mvarIdMap + params
 
         Map<String, Object> queryResults = variantStrainService.query(paramsMap)
 

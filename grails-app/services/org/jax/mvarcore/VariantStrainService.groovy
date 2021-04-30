@@ -35,10 +35,9 @@ class VariantStrainService {
         }
 
         //CAID
-        def mvarId = params.mvarId
         List<VariantCanonIdentifier> canonVarList = []
-        if (mvarId) {
-            canonVarList = VariantCanonIdentifier.findAllByCaID(mvarId)
+        if (params.mvarIdList) {
+            canonVarList = VariantCanonIdentifier.findAllByCaIDInList(params.mvarIdList)
         }
 
         //generate query
@@ -93,10 +92,8 @@ class VariantStrainService {
                 }
             }
             if (params.hgvsList) {
-                for(String hgvs : params.hgvsList) {
-                    and {
-                        ilike('variantHgvsNotation', '%' + hgvs + '%')
-                    }
+                and {
+                    inList('variantHgvsNotation', params.hgvsList)
                 }
             }
 
