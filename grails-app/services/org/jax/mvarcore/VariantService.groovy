@@ -67,9 +67,13 @@ abstract class VariantService {
         //CAID
         def mvarIdList = params.list('mvarId')
         List<VariantCanonIdentifier> canonVarList = []
-        if (mvarIdList) {
-            canonVarList = VariantCanonIdentifier.findAllByCaIDInList(mvarIdList)
+        for (id in mvarIdList){
+            def vca = VariantCanonIdentifier.findByCaID(id)
+            if (vca){
+                canonVarList.push(vca)
+            }
         }
+
         //HGVSg
         def hgvsList = params.list('hgvs')
 
