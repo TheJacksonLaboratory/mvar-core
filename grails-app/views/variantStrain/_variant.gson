@@ -9,5 +9,6 @@ json {
 	ref variant.ref
 	alt variant.alt
 	gene variant.gene.symbol
+	type variant.type
 	strains tmpl.variantStrain(variant.variantStrains ?: [])
 }

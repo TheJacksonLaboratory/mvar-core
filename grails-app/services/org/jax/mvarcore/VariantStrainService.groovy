@@ -15,6 +15,7 @@ class VariantStrainService {
 
 
         log.info('query params: ' + params)
+        println(params)
 
         Map<String, Object> queryResults = [variantList: [], variantCount: 0L]
 
@@ -28,15 +29,15 @@ class VariantStrainService {
         String startPos = params.startPos
         String endPos = params.endPos
 
-        //IMPACT
-        def impactParams = params.impact
-        //FUNCTIONAL CLASS / sequence ontology / annotation
-        def functionalClassList = params.consequence
-
-
         //Gene or postion coordinates must be provided
-        if (! params.genes && (! chr || ! startPos || ! endPos)) {
+        if (! params.genes && (! chr || ! startPos || ! endPos) && (! params.hgvsList)) {
             return  queryResults
+        }
+
+        //CAID
+        List<VariantCanonIdentifier> canonVarList = []
+        if (params.mvarIdList) {
+            canonVarList = VariantCanonIdentifier.findAllByCaIDInList(params.mvarIdList)
         }
 
         //generate query
@@ -62,19 +63,40 @@ class VariantStrainService {
                 }
             }
 
-            if (impactParams) {
-                and {
-                    ilike('impact', '%' + impactParams + '%')
+            if (params.types){
+                and{
+                    inList('type', params.types)
                 }
             }
 
-            if (functionalClassList){
-                for(String functionalClass : functionalClassList) {
+            if (params.impacts) {
+                for(String impact : params.impacts) {
                     and {
-                        ilike('functionalClassCode', '%' + functionalClass + '%')
+                        ilike('impact', '%' + impact + '%')
                     }
                 }
             }
+
+            if (params.consequences){
+                for(String consequence : params.consequences) {
+                    and {
+                        ilike('functionalClassCode', '%' + consequence + '%')
+                    }
+                }
+            }
+            if (canonVarList) {
+                and {
+                    canonVarIdentifier {
+                        inList("id", canonVarList.collect { it.id })
+                    }
+                }
+            }
+            if (params.hgvsList) {
+                and {
+                    inList('variantHgvsNotation', params.hgvsList)
+                }
+            }
+
         }
 
         Long count = results.totalCount

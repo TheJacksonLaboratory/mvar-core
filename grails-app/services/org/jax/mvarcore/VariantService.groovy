@@ -62,17 +62,20 @@ abstract class VariantService {
         //IMPACT
         def impactParams = params.list('impact')
         //FUNCTIONAL CLASS / sequence ontology / annotation
-        def functionalClassList = params.list('annotation')
+        def functionalClassList = params.list('consequence')
 
         //CAID
-        def mvarId = params.mvarId
+        def mvarIdList = params.list('mvarId')
         List<VariantCanonIdentifier> canonVarList = []
-        if (mvarId) {
-            canonVarList = VariantCanonIdentifier.findAllByCaID(mvarId)
+        for (id in mvarIdList){
+            def vca = VariantCanonIdentifier.findByCaID(id)
+            if (vca){
+                canonVarList.push(vca)
+            }
         }
+
         //HGVSg
-        def hgvsParam = params.hgvs
-        // TODO support chromosome range
+        def hgvsList = params.list('hgvs')
 
         //generate query
         def results = Variant.createCriteria().list ([max:max, offset:offset]) {
@@ -116,14 +119,16 @@ abstract class VariantService {
             }
 
             if (impactParams){
-                and {
-                    inList ('impact', impactParams)
+                for(String impact : impactParams) {
+                    and {
+                        ilike('impact', '%' + impact + '%')
+                    }
                 }
             }
 
-            if (hgvsParam) {
+            if (hgvsList) {
                 and {
-                    ilike('variantHgvsNotation', '%' + hgvsParam + '%')
+                    inList('variantHgvsNotation', hgvsList)
                 }
             }
 
