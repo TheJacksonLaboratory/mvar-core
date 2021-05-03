@@ -20,6 +20,8 @@ class VariantCanonIdentifier {
         caID index: true
         chr column: 'chr', sqlType: "char(3)"
         ref column: 'ref', sqlType: "char(100)"
+        variantRefTxt sqlType: "varchar(350)"
+
     }
 
     def afterInsert() {

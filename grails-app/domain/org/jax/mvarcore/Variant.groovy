@@ -29,6 +29,8 @@ class Variant {
         functionalClassCode index: true
         chr sqlType: "char(3)"
         ref sqlType: "char(100)"
+        variantRefTxt sqlType: "varchar(350)"
+        parentVariantRefTxt sqlType: "varchar(350)"
         version false
     }
 
