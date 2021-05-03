@@ -27,12 +27,17 @@ Make sure that the files are located in /var/lib/mysql
 
 ### Transcripts
 
-load data local infile 'transcripts_ref_noversion.csv' into table transcript  fields terminated by ',' optionally enclosed by '"' lines terminated by '\n' ignore 1 lines (primary_identifier, m_rna_id, gene_symbol, description);
+load data local infile 'transcripts_ref_noversion.csv' into table transcript  fields terminated by '\t' optionally enclosed by '"' lines terminated by '\n' ignore 1 lines (primary_identifier, m_rna_id, gene_symbol, description);
 
 
 ### Alleles
 
 load data local infile 'alleles_seed.csv' into table allele  fields terminated by ',' optionally enclosed by '"' lines terminated by '\n' ignore 1 lines (type, name, primary_identifier, symbol);
+
+
+### Sequence Ontology
+
+load data local infile 'complete_term_graph.csv' into table sequence_ontology  fields terminated by '\t' optionally enclosed by '"' lines terminated by '\n' ignore 1 lines (accession, name, definition, parents, children);
 
 
 ## Re run the grails application to populate strains, genes and corresponding relationships
