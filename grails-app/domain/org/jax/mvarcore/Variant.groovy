@@ -13,7 +13,7 @@ class Variant {
     String assembly
     String accession
     String variantRefTxt
-    String parentVariantRefTxt //holds full variation change for the parent reference <chr_pos_ref_alt>  -- ref and alt is empty will have '.' as value
+//    String parentVariantRefTxt //holds full variation change for the parent reference <chr_pos_ref_alt>  -- ref and alt is empty will have '.' as value
     boolean parentRefInd // should be set to true for GRCm38 assembly
     String variantHgvsNotation
     String dnaHgvsNotation
@@ -22,15 +22,19 @@ class Variant {
     String externalId
     String externalSource
     String strainName
+    String sourceVersion
     Gene gene
 
     static mapping = {
-        parentVariantRefTxt index: true
+//        parentVariantRefTxt index: true
         functionalClassCode index: true
         chr sqlType: "char(3)"
         ref sqlType: "char(100)"
         variantRefTxt sqlType: "varchar(350)"
-        parentVariantRefTxt sqlType: "varchar(350)"
+        assembly sqlType: "varchar(12)"
+        type sqlType: "varchar(6)"
+        accession sqlType: "varchar(100)"
+//        parentVariantRefTxt sqlType: "varchar(350)"
         version false
     }
 
@@ -45,14 +49,15 @@ class Variant {
         assembly nullable: false
         accession nullable: true
         canonVarIdentifier nullable: false
-        parentVariantRefTxt nullable: false
+//        parentVariantRefTxt nullable: false
         parentRefInd nullable: false
         externalId nullable: true
         externalSource nullable: true
         variantHgvsNotation nullable: true
+        sourceVersion nullable: true
         dnaHgvsNotation nullable: true, sqlType: 'text'
         proteinHgvsNotation nullable: true, sqlType: 'text'
-        impact nullable: true, sqlType: 'text'
+        impact nullable: true
         strainName nullable: false
     }
 }
