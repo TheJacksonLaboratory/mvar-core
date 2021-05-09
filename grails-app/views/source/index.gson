@@ -1,0 +1,8 @@
+import org.jax.mvarcore.Source
+
+model {
+	Iterable<Source> sourceList
+}
+
+json tmpl.source(sourceList ?: [])
+

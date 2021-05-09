@@ -21,7 +21,6 @@ class Variant {
     String impact
     String externalId
     String externalSource
-    String strainName
     String sourceVersion
     Gene gene
 
@@ -38,7 +37,7 @@ class Variant {
         version false
     }
 
-    static hasMany = [variantStrains: VariantStrain, transcripts: Transcript, genotypes: Genotype]
+    static hasMany = [variantStrains: VariantStrain, transcripts: Transcript, genotypes: Genotype, sources: Source]
 //    static hasOne = [gene: Gene]
 
     static constraints = {
@@ -58,6 +57,5 @@ class Variant {
         dnaHgvsNotation nullable: true, sqlType: 'text'
         proteinHgvsNotation nullable: true, sqlType: 'text'
         impact nullable: true
-        strainName nullable: false
     }
 }
