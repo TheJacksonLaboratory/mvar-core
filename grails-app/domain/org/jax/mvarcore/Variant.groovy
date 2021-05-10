@@ -21,7 +21,6 @@ class Variant {
     String impact
     String externalId
     String externalSource
-    String sourceVersion
     Gene gene
 
     static mapping = {
@@ -53,7 +52,6 @@ class Variant {
         externalId nullable: true
         externalSource nullable: true
         variantHgvsNotation nullable: true
-        sourceVersion nullable: true
         dnaHgvsNotation nullable: true, sqlType: 'text'
         proteinHgvsNotation nullable: true, sqlType: 'text'
         impact nullable: true
