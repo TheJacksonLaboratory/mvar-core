@@ -24,7 +24,9 @@ class Variant {
     Gene gene
 
     static mapping = {
-//        parentVariantRefTxt index: true
+        position index: true
+		variantHgvsNotation index: true
+        variantRefTxt index: true
         functionalClassCode index: true
         chr sqlType: "char(3)"
         ref sqlType: "char(100)"
@@ -37,7 +39,6 @@ class Variant {
     }
 
     static hasMany = [variantStrains: VariantStrain, transcripts: Transcript, genotypes: Genotype, sources: Source]
-//    static hasOne = [gene: Gene]
 
     static constraints = {
 //        position unique: ['assembly', 'ref', 'alt']
@@ -54,6 +55,6 @@ class Variant {
         variantHgvsNotation nullable: true
         dnaHgvsNotation nullable: true, sqlType: 'text'
         proteinHgvsNotation nullable: true, sqlType: 'text'
-        impact nullable: true
+        impact nullable: true, sqlType: 'text'
     }
 }
