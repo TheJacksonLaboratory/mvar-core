@@ -15,7 +15,10 @@ class MvarStats {
     int strainAnalysisCount
     int geneAnalysisCount
     int transcriptAnalysisCount
-    
+
+    static mapping = {
+        version false
+    }
     static constraints = {
     }
 }

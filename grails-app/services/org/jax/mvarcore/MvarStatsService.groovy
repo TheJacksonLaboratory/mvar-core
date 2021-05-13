@@ -1,8 +1,6 @@
 package org.jax.mvarcore
 
-import grails.gorm.services.Service
 import grails.gorm.transactions.Transactional
-import groovy.json.JsonBuilder
 import groovy.sql.Sql
 import org.hibernate.SessionFactory
 import org.hibernate.internal.SessionImpl
@@ -30,46 +28,17 @@ class MvarStatsService {
             stat.variantStrainCount = result.variant_strain_count[0]
             stat.variantTranscriptCount = result.variant_transcript_count[0]
             stat.variantCanonIdentifierCount = result.variant_canon_identifier_count[0]
-
+            stat.strainAnalysisCount = result.strain_analysis_count[0]
+            stat.transcriptAnalysisCount = result.transcript_analysis_count[0]
+            stat.geneAnalysisCount = result.gene_analysis_count[0]
         } catch (SQLException exc) {
             log.debug('The following SQLException occurred: ' + exc.toString())
         } finally {
             cleanUpGorm()
         }
-
-        // search for distinct strains
-        try {
-            final Sql sql = getSql()
-            def resultStrain = sql.rows("SELECT count(distinct strain_id) as strain_num FROM mvar_core.variant_strain;")
-            stat.strainAnalysisCount = resultStrain.strain_num[0]
-
-        } catch (SQLException exc) {
-            log.debug('The following SQLException occurred: ' + exc.toString())
-        } finally {
-            cleanUpGorm()
-        }
-        // search for distinct transcripts
-        try {
-            final Sql sql = getSql()
-            def resultTranscript = sql.rows("SELECT count(distinct transcript_id) as transcript_num FROM mvar_core.variant_transcript;")
-            stat.transcriptAnalysisCount = resultTranscript.transcript_num[0]
-
-        } catch (SQLException exc) {
-            log.debug('The following SQLException occurred: ' + exc.toString())
-        } finally {
-            cleanUpGorm()
-        }
-        // search for distinct genes
-        try {
-            final Sql sql = getSql()
-            def resultTranscript = sql.rows("SELECT count(distinct gene_id) as gene_num FROM mvar_core.variant;")
-            stat.geneAnalysisCount = resultTranscript.gene_num[0]
-
-        } catch (SQLException exc) {
-            log.debug('The following SQLException occurred: ' + exc.toString())
-        } finally {
-            cleanUpGorm()
-        }
+//        def resultStrain = sql.rows("SELECT count(distinct strain_id) as strain_num FROM mvar_core.variant_strain;")
+//        def resultTranscript = sql.rows("SELECT count(distinct transcript_id) as transcript_num FROM mvar_core.variant_transcript;")
+//        def resultTranscript = sql.rows("SELECT count(distinct gene_id) as gene_num FROM mvar_core.variant;")
         def list = []
         list << stat
         return list
@@ -79,7 +48,6 @@ class MvarStatsService {
         new Sql(getConnection())
     }
 
-
     /**
      * @return a Connection with the underlying connection for the active session
      */
@@ -87,7 +55,6 @@ class MvarStatsService {
         SessionImpl sessionImpl = sessionFactory.currentSession as SessionImpl
         sessionImpl.connection()
     }
-
 
     def cleanUpGorm() {
         def session = sessionFactory.currentSession
