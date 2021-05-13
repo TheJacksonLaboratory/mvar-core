@@ -4,6 +4,7 @@ class Source {
 
     String name
     String sourceVersion
+    String url
 
     static mapping = {
         name sqlType: "char(50)"
@@ -13,5 +14,6 @@ class Source {
     static constraints = {
         name nullable: false
         sourceVersion nullable: false
+        url nullable: true
     }
 }
