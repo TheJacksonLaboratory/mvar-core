@@ -23,6 +23,7 @@ class Gene {
     static mapping = {
         mgiId index: 'mgi_id_idx'
         symbol index:'symbol_idx'
+        version false
     }
 
     static hasMany = [synonyms: Synonym, transcripts: Transcript]

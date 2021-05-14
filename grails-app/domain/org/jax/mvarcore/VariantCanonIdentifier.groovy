@@ -3,10 +3,6 @@ package org.jax.mvarcore
 class VariantCanonIdentifier {
 
     String caID
-    Long position
-    String chr
-    String ref
-    String alt
     String variantRefTxt
 
     static constraints = {
@@ -18,10 +14,8 @@ class VariantCanonIdentifier {
     static mapping = {
         variantRefTxt index: true
         caID index: true
-        chr column: 'chr', sqlType: "char(3)"
-        ref column: 'ref', sqlType: "char(100)"
         variantRefTxt sqlType: "varchar(350)"
-
+        version false
     }
 
     def afterInsert() {

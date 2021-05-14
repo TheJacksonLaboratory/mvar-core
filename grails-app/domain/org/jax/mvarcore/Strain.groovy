@@ -18,5 +18,6 @@ class Strain {
     static mapping = {
         name index:'name_idx'
         primaryIdentifier index:'primary_identifier_idx'
+        version false
     }
 }

@@ -5,6 +5,7 @@ class Synonym {
     String name
     static mapping = {
         name index:'name_idx'
+        version false
     }
 
     static constraints = {

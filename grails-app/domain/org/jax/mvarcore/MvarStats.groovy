@@ -9,13 +9,16 @@ class MvarStats {
     int variantCount
     int variantCanonIdentifierCount
 
-    int variantStrainCount
-    int variantTranscriptCount
+    Long variantStrainCount
+    Long variantTranscriptCount
 
     int strainAnalysisCount
     int geneAnalysisCount
     int transcriptAnalysisCount
-    
+
+    static mapping = {
+        version false
+    }
     static constraints = {
     }
 }
