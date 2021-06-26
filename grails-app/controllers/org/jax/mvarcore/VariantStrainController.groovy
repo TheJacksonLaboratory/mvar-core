@@ -75,7 +75,7 @@ class VariantStrainController {
             produces = "application/json",
             consumes = "application/json",
             httpMethod = "GET",
-            response = Variant.class
+            response = Strain.class
     )
     @ApiResponses([
             @ApiResponse(code = 405,
