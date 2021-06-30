@@ -10,7 +10,7 @@ class VariantStrain {
     }
 
     static mapping = {
-        genotype sqlType: "char(10)"
+        genotype sqlType: "char(5)"
         version false
     }
 }

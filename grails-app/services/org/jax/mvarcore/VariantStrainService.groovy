@@ -100,6 +100,27 @@ class VariantStrainService {
         }
 
         Long count = results.totalCount
+
+        // get all mvar strains
+        List<MvarStrains> strainList = MvarStrains.all
+        // infer all missing variantStrain distribution
+        for (Variant variant : results) {
+            Set<VariantStrain> variantStrainList = variant.variantStrains
+            // put existing strains in variantStrain in a List
+            List<Strain> existingStrains = new ArrayList<>()
+            for (VariantStrain variantStrain : variantStrainList) {
+                existingStrains.add(variantStrain.strain)
+            }
+            for(MvarStrains strain : strainList) {
+                if (!existingStrains.contains(strain.strain)) {
+                    VariantStrain variantStrain = new VariantStrain()
+                    variantStrain.strain = strain.strain
+                    variantStrain.variant = variant
+                    variantStrain.genotype = '0/0'
+                    variantStrainList.add(variantStrain)
+                }
+            }
+        }
         queryResults.variantList = results
         queryResults.variantCount = count
 
@@ -115,27 +136,16 @@ class VariantStrainService {
 
         List<Strain> strains = []
 
-        def criteria = VariantStrain.createCriteria()
-        def distinctStrainIds =  criteria.list {
-            projections {
-                distinct('strain')
+        def mvarStrains = MvarStrains.all
+
+        strains = Strain.createCriteria().list(){
+            and{
+                inList('id', mvarStrains.collect { it.strainId})
             }
+            order('name', 'asc')
         }
-
-        if (distinctStrainIds){
-            strains = Strain.createCriteria().list(){
-
-                and{
-                    inList('id', distinctStrainIds.collect { it.id })
-                }
-
-                order('name', 'asc')
-            }
-        }
-
         return strains
     }
 
 }
-
 
