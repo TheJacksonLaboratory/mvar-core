@@ -22,7 +22,6 @@ apply plugin:"org.grails.plugins.views-json"
 repositories {
     mavenLocal()
     maven { url "https://repo.grails.org/grails/core" }
-    maven { url "https://dl.bintray.com/ajay-kumar/plugins" }
 
     flatDir {
         dir("libs")
@@ -53,9 +52,7 @@ dependencies {
     compile "org.grails.plugins:views-json"
     compile "org.grails.plugins:views-json-templates"
     compile "org.grails:grails-datastore-rest-client"
-    compile "org.grails.plugins:swagger:1.0.1"
     console "org.grails:grails-console"
-//    runtime "org.mariadb.jdbc:mariadb-java-client:2.5.2"
     profile "org.grails.profiles:rest-api"
     runtime "org.glassfish.web:el-impl:2.1.2-b03"
     runtime "com.h2database:h2"
@@ -68,6 +65,7 @@ dependencies {
     testRuntime "org.seleniumhq.selenium:selenium-chrome-driver:2.47.1"
     testRuntime "org.seleniumhq.selenium:selenium-htmlunit-driver:2.47.1"
     testRuntime "net.sourceforge.htmlunit:htmlunit:2.18"
+    implementation files('libs/swagger-1.0.1.jar', 'libs/swagger-annotations-1.5.22.jar', 'libs/swagger-core-1.5.22.jar', 'libs/swagger-models-1.5.22.jar', 'libs/swagger-servlet-1.5.22.jar', 'libs/swagger-ui-3.20.9.jar')
     implementation files('libs/groovy-ngs-utils.jar')
     testCompile files ('libs/groovy-ngs-utils.jar')
     implementation 'org.jetbrains:annotations:15.0'
