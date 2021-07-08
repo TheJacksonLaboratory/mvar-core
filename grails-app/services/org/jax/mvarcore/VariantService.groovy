@@ -74,6 +74,9 @@ abstract class VariantService {
             }
         }
 
+        //dbSNP Id
+        def dbSNPIdList = params.list('dbSNPid')
+
         //HGVSg
         def hgvsList = params.list('hgvs')
 
@@ -148,6 +151,13 @@ abstract class VariantService {
                         inList("id", canonVarList.collect { it.id })
                     }
                 }
+            }
+
+            if ( dbSNPIdList) {
+                and {
+                    inList ("accession", dbSNPIdList)
+                }
+
             }
             if (varTypeList){
                 and{

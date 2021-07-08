@@ -29,15 +29,18 @@ class VariantStrainService {
         String startPos = params.startPos
         String endPos = params.endPos
 
-        //Gene or postion coordinates must be provided
-        if (! params.genes && (! chr || ! startPos || ! endPos) && (! params.hgvsList)) {
+        //At least one of required parameters must be provided
+        if (! params.genes && (! chr || ! startPos || ! endPos) && (! params.hgvsList) && (! params.mvarIdList) && (! params.dbSNPidList)) {
             return  queryResults
         }
 
         //CAID
         List<VariantCanonIdentifier> canonVarList = []
-        if (params.mvarIdList) {
-            canonVarList = VariantCanonIdentifier.findAllByCaIDInList(params.mvarIdList)
+        for (id in params.mvarIdList){
+            def vca = VariantCanonIdentifier.findByCaID(id)
+            if (vca){
+                canonVarList.push(vca)
+            }
         }
 
         //generate query
@@ -94,6 +97,11 @@ class VariantStrainService {
             if (params.hgvsList) {
                 and {
                     inList('variantHgvsNotation', params.hgvsList)
+                }
+            }
+            if (params.dbSNPidList) {
+                and {
+                    inList ('accession', params.dbSNPidList)
                 }
             }
 

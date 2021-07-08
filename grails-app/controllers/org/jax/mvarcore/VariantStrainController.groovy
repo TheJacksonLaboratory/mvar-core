@@ -38,6 +38,9 @@ class VariantStrainController {
             @ApiImplicitParam(name = "endPos", paramType = "query", required = false, value = "End position", dataType = "long"),
             @ApiImplicitParam(name = "type", paramType = "query", required = false, value = "Variant type: can be SNP, INS or DEL", dataType = "string"),
             @ApiImplicitParam(name = "impact", paramType = "query", required = false, value = "Impact", dataType = "string"),
+            @ApiImplicitParam(name = "mvarId", paramType = "query", required = false, value = "MVAR id: MCA_*", dataType = "string"),
+            @ApiImplicitParam(name = "hgvs", paramType = "query", required = false, value = "HGVS genomic nomenclature"),
+            @ApiImplicitParam(name = "dbSNPid", paramType = "query", required = false, value = "dbSNP ID"),
             @ApiImplicitParam(name = "consequence", paramType = "query", required = false, value = "Molecular Consequence", dataType = "string"),
             @ApiImplicitParam(name = "applicationType", paramType = "header", required = true, defaultValue = "web", value = "Application Types", dataType = "string"),
             @ApiImplicitParam(name = "Accept-Language", paramType = "header", required = true, defaultValue = "en", value = "Accept-Language", dataType = "string")
@@ -59,7 +62,8 @@ class VariantStrainController {
         def consequencesMap = [consequences:  params.list('consequence')]
         def hgvsMap = [hgvsList:  params.list('hgvs')]
         def mvarIdMap = [mvarIdList: params.list('mvarId')]
-        def paramsMap = genesMap + varTypesMap + impactsMap + consequencesMap + hgvsMap + mvarIdMap + params
+        def dbSNPidList = [dbSNPidList: params.list('dbSNPid')]
+        def paramsMap = genesMap + varTypesMap + impactsMap + consequencesMap + hgvsMap + mvarIdMap + dbSNPidList + params
 
         Map<String, Object> queryResults = variantStrainService.query(paramsMap)
 

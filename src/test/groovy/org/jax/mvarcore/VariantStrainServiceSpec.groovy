@@ -7,6 +7,7 @@ import spock.lang.Specification
 class VariantStrainServiceSpec extends Specification implements ServiceUnitTest<VariantStrainService>, DataTest{
 
     def setup() {
+        mockDomain MvarStrains
         mockDomain Strain
         mockDomain VariantCanonIdentifier
         mockDomain Variant
@@ -22,6 +23,9 @@ class VariantStrainServiceSpec extends Specification implements ServiceUnitTest<
         Strain s1  = new Strain(name:'s1', primaryIdentifier:'PI_1').save(failOnError: true)
         Strain s2  = new Strain(name:'s2', primaryIdentifier:'PI_2').save(failOnError: true)
 
+        MvarStrains mvarS1 = new MvarStrains(name:'s1', strain: s1).save(failOnError: true)
+        MvarStrains mvarS2 = new MvarStrains(name:'s2', strain: s2).save(failOnError: true)
+
         VariantCanonIdentifier vci1 = new VariantCanonIdentifier(chr:'1', position: '12314', ref:'A', alt:'C',
                 variantRefTxt:'vrt').save(failOnError: true)
         VariantCanonIdentifier vci2 = new VariantCanonIdentifier(chr:'2', position: '45678', ref:'A', alt:'C',
@@ -29,11 +33,11 @@ class VariantStrainServiceSpec extends Specification implements ServiceUnitTest<
 
         Variant var1 = new Variant(chr:'1', position: '10000', ref:'A', alt:'C',  assembly:'38',
                 parentVariantRefTxt:'test', parentRefInd:false, strainName:'s', variantRefTxt:'test', type:'a',
-                canonVarIdentifier:vci1, gene: g1).save(failOnError: true, flush:true)
+                accession:'rs1234', canonVarIdentifier:vci1, gene: g1).save(failOnError: true, flush:true)
 
         Variant var2 = new Variant(chr:'1', position: '20000', ref:'T', alt:'C',  assembly:'38',
                 parentVariantRefTxt:'test', parentRefInd:false, strainName:'s', variantRefTxt:'test', type:'a',
-                canonVarIdentifier:vci2, gene:g2).save(failOnError: true, flush:true)
+                accession:'rs5678', canonVarIdentifier:vci2, gene:g2).save(failOnError: true, flush:true)
 
         new VariantStrain(variant: Variant.findByPosition('10000'), strain: Strain.findByName('s1'), genotype: '1/1').save(failOnError: true)
         new VariantStrain(variant: Variant.findByPosition('20000'), strain: Strain.findByName('s1'), genotype: '1/1').save(failOnError: true)
@@ -101,10 +105,28 @@ class VariantStrainServiceSpec extends Specification implements ServiceUnitTest<
 
         when:
             def strains = service.getDBStrains()
-
         then:
             strains.size() == 2
             strains[0].name == 's1'
             strains[1].name == 's2'
+    }
+
+    void "Test query by dbSNPId"(){
+
+        when:
+        def results = service.query(params)
+
+        then:
+        results.variantList.size() == expectSize
+        results.variantCount == expectSize
+        results.variantList[0]?.accession == expectDBsnpId
+
+        where:
+
+        params                               | expectSize |   expectDBsnpId  |   desc
+        [dbSNPidList:['rsInvalid']]          |    0       |   null           | 'Invalid parameters'
+        [dbSNPidList:['rs1234']]             |    1       |   'rs1234'       | 'var 1'
+        [dbSNPidList:['rs5678']]             |    1       |   'rs5678'       | 'var 2'
+        [dbSNPidList:['rs1234', 'rs5678']]   |    2       |   'rs1234'       | 'var 1 and var 2'
     }
 }
