@@ -22,6 +22,9 @@ appender('STDOUT', ConsoleAppender) {
     }
 }
 
+//logger("org.hibernate.SQL", DEBUG, ["STDOUT"], false)
+//logger("org.hibernate.type.descriptor.sql.BasicBinder", TRACE, ["STDOUT"], false)
+
 def targetDir = BuildSettings.TARGET_DIR
 if (Environment.isDevelopmentMode() && targetDir != null) {
     appender("FULL_STACKTRACE", FileAppender) {
@@ -32,5 +35,6 @@ if (Environment.isDevelopmentMode() && targetDir != null) {
         }
     }
     logger("StackTrace", ERROR, ['FULL_STACKTRACE'], false)
+
 }
 root(ERROR, ['STDOUT'])
