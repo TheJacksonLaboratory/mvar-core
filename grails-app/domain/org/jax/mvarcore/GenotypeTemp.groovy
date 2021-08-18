@@ -4,6 +4,7 @@ class GenotypeTemp {
 
     String format
     String genotypeData
+    int variantId
     static mapping = {
         version false
     }
