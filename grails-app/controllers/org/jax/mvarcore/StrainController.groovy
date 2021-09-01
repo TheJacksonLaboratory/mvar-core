@@ -91,7 +91,7 @@ class StrainController {
             nickname = "strain/query",
             produces = "application/json",
             consumes = "application/json",
-            httpMethod = "GET",
+            httpMethod = "POST",
             response = Strain.class
     )
     @ApiResponses([
