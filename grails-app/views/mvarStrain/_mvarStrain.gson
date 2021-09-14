@@ -1,0 +1,7 @@
+import org.jax.mvarcore.MvarStrain
+
+model {
+	MvarStrain mvarStrain
+}
+
+json g.render(mvarStrain, [resolveTemplate: false])
