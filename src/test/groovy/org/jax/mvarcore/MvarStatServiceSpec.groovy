@@ -1,9 +1,9 @@
 package org.jax.mvarcore
 
-import grails.testing.gorm.DomainUnitTest
+import grails.testing.services.ServiceUnitTest
 import spock.lang.Specification
 
-class MvarStrainsSpec extends Specification implements DomainUnitTest<MvarStrains> {
+class MvarStatServiceSpec extends Specification implements ServiceUnitTest<MvarStatService>{
 
     def setup() {
     }

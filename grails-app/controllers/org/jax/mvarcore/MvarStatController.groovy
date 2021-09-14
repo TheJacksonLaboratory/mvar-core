@@ -12,23 +12,23 @@ import io.swagger.annotations.ApiResponses
 
 import static org.springframework.http.HttpStatus.NO_CONTENT
 
-@Api(value = "/api/v1", tags = ["mvarStats"], description = "MvarStats Api's")
-class MvarStatsController {
+@Api(value = "/api/v1", tags = ["mvarStat"])
+class MvarStatController {
 
     static namespace = "v1"
 
-    MvarStatsService mvarStatsService
+    MvarStatService mvarStatService
 
     static responseFormats = ['json', 'xml']
     static allowedMethods = [show: "GET", update: "PUT"]
 
     @ApiOperation(
-            value = "Show MvarStats",
-            nickname = "mvarStats",
+            value = "Show MvarStat",
+            nickname = "mvarStat",
             produces = "application/json",
             consumes = "application/json",
             httpMethod = "GET",
-            response = MvarStats.class
+            response = MvarStat.class
     )
     @ApiResponses([
             @ApiResponse(code = 405,
@@ -42,16 +42,16 @@ class MvarStatsController {
             @ApiImplicitParam(name = "Accept-Language", paramType = "header", required = true, defaultValue = "en", value = "Accept-Language", dataType = "string")
     ])
     def index() {
-        render (view:'index', model:[mvarStatsList: mvarStatsService.show(), mvarStatsCount: 1])
+        render (view:'index', model:[mvarStatList: mvarStatService.show(), mvarStatCount: 1])
     }
 
     @ApiOperation(
-            value = "Show MvarStats Analysis",
-            nickname = "mvarStats/list",
+            value = "Show MvarStat Analysis",
+            nickname = "mvarStat/list",
             produces = "application/json",
             consumes = "application/json",
             httpMethod = "GET",
-            response = MvarStats.class
+            response = MvarStat.class
     )
     @ApiResponses([
             @ApiResponse(code = 405,
@@ -65,6 +65,6 @@ class MvarStatsController {
             @ApiImplicitParam(name = "Accept-Language", paramType = "header", required = true, defaultValue = "en", value = "Accept-Language", dataType = "string")
     ])
     def show() {
-        render (view:'index', model:[mvarStatsList: mvarStatsService.show(), mvarStatsCount: 1])
+        render (view:'index', model:[mvarStatList: mvarStatService.show(), mvarStatCount: 1])
     }
 }

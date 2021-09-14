@@ -9,28 +9,30 @@ import java.sql.Connection
 import java.sql.SQLException
 
 @Transactional
-class MvarStatsService {
+class MvarStatService {
 
     SessionFactory sessionFactory
 
     def show() {
 
-        MvarStats stat = new MvarStats()
+        MvarStat stat = new MvarStat()
 
         try {
             final Sql sql = getSql()
-            def result = sql.rows("SELECT * from mvar_stats;")
-            stat.alleleCount = result.allele_count[0]
-            stat.geneCount = result.gene_count[0]
-            stat.strainCount = result.strain_count[0]
-            stat.transcriptCount = result.transcript_count[0]
-            stat.variantCount = result.variant_count[0]
-            stat.variantStrainCount = result.variant_strain_count[0]
-            stat.variantTranscriptCount = result.variant_transcript_count[0]
-            stat.variantCanonIdentifierCount = result.variant_canon_identifier_count[0]
-            stat.strainAnalysisCount = result.strain_analysis_count[0]
-            stat.transcriptAnalysisCount = result.transcript_analysis_count[0]
-            stat.geneAnalysisCount = result.gene_analysis_count[0]
+            def result = sql.rows("SELECT * from mvar_stat;")
+            if (result) {
+                stat.alleleCount = result.allele_count[0]
+                stat.geneCount = result.gene_count[0]
+                stat.strainCount = result.strain_count[0]
+                stat.transcriptCount = result.transcript_count[0]
+                stat.variantCount = result.variant_count[0]
+                stat.variantStrainCount = result.variant_strain_count[0]
+                stat.variantTranscriptCount = result.variant_transcript_count[0]
+                stat.variantCanonIdentifierCount = result.variant_canon_identifier_count[0]
+                stat.strainAnalysisCount = result.strain_analysis_count[0]
+                stat.transcriptAnalysisCount = result.transcript_analysis_count[0]
+                stat.geneAnalysisCount = result.gene_analysis_count[0]
+            }
         } catch (SQLException exc) {
             log.debug('The following SQLException occurred: ' + exc.toString())
         } finally {

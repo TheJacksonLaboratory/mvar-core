@@ -3,7 +3,7 @@ package org.jax.mvarcore
 import grails.testing.web.controllers.ControllerUnitTest
 import spock.lang.Specification
 
-class MvarStatsControllerSpec extends Specification implements ControllerUnitTest<MvarStatsController> {
+class MvarStatControllerSpec extends Specification implements ControllerUnitTest<MvarStatController> {
 
     def setup() {
     }

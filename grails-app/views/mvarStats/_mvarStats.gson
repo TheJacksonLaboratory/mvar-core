@@ -1,7 +1,0 @@
-import org.jax.mvarcore.MvarStats
-
-model {
-	MvarStats mvarStats
-}
-
-json g.render(mvarStats, [resolveTemplate: false])

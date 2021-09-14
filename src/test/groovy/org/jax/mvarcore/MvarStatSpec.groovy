@@ -3,7 +3,7 @@ package org.jax.mvarcore
 import grails.testing.gorm.DomainUnitTest
 import spock.lang.Specification
 
-class MvarStatsSpec extends Specification implements DomainUnitTest<MvarStats> {
+class MvarStatSpec extends Specification implements DomainUnitTest<MvarStat> {
 
     def setup() {
     }

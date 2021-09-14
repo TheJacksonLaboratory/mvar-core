@@ -1,6 +1,6 @@
 package org.jax.mvarcore
 
-class MvarStats {
+class MvarStat {
 
     int alleleCount
     int geneCount

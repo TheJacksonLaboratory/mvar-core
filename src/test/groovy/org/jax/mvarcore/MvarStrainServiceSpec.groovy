@@ -3,7 +3,7 @@ package org.jax.mvarcore
 import grails.testing.services.ServiceUnitTest
 import spock.lang.Specification
 
-class MvarStatsServiceSpec extends Specification implements ServiceUnitTest<MvarStatsService>{
+class MvarStrainServiceSpec extends Specification implements ServiceUnitTest<MvarStrainService>{
 
     def setup() {
     }
