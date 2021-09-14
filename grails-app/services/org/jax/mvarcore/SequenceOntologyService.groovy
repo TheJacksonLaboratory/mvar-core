@@ -27,7 +27,10 @@ abstract class SequenceOntologyService {
         println('query params: ' + params)
 
         //name
-        def nameList = params.list('name')
+        def nameList = params.list('label')
+
+        //soId
+        def soIdList = params.list('soId')
 
         //definition
         def synonymList = params.list('definition')
@@ -37,10 +40,14 @@ abstract class SequenceOntologyService {
 
             if (nameList) {
                 and {
-                    inList('name', nameList)
+                    inList('label', nameList)
                 }
             }
-
+            if (soIdList) {
+                and {
+                    inList('soId', soIdList)
+                }
+            }
             if (synonymList) {
                 and {
                     inList('definition', synonymList)

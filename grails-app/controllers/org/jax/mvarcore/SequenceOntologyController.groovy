@@ -35,8 +35,7 @@ class SequenceOntologyController {
                     message = "Method Not Found")
     ])
     @ApiImplicitParams([
-            @ApiImplicitParam(name = "name", paramType = "query", required = false, value = "Sequence Ontology name", dataType = "string"),
-            @ApiImplicitParam(name = "definition", paramType = "query", required = false, value = "Sequence Ontology definition", dataType = "string"),
+            @ApiImplicitParam(name = "label", paramType = "query", required = false, value = "Sequence Ontology name", dataType = "string"),
             @ApiImplicitParam(name = "applicationType", paramType = "header", required = true, defaultValue = "web", value = "Application Types", dataType = "string"),
             @ApiImplicitParam(name = "Accept-Language", paramType = "header", required = true, defaultValue = "en", value = "Accept-Language", dataType = "string")
     ])
@@ -48,9 +47,9 @@ class SequenceOntologyController {
             def count = 0
             List<SequenceOntology> sequenceOntologies = []
 
-            count = SequenceOntology.countByNameLike('%'+ params.name +'%')
+            count = SequenceOntology.countByLabel(params.name)
             log.info("sequence ontology count = " + count)
-            sequenceOntologies =  SequenceOntology.findAllByNameLike('%'+ params.name +'%', [max: 10])
+            sequenceOntologies =  SequenceOntology.findAllByLabel(params.name, [max: 10])
 
             render(view: 'index', model: [sequenceOntologyList: sequenceOntologies, sequenceOntologyCount: count])
             return
@@ -104,7 +103,8 @@ class SequenceOntologyController {
             @ApiImplicitParam(name = "offset", paramType = "query", required = false, value = "Offset value", dataType = "long"),
             @ApiImplicitParam(name = "sortBy", paramType = "query", required = false, value = "Sorting condition", dataType = "string"),
             @ApiImplicitParam(name = "sortDirection", paramType = "query", required = false, value = "asc or desc", dataType = "string"),
-            @ApiImplicitParam(name = "name", paramType = "query", required = false, value = "Sequence Ontology name", dataType = "string"),
+            @ApiImplicitParam(name = "soId", paramType = "query", required = false, value = "Sequence Ontology id", dataType = "string"),
+            @ApiImplicitParam(name = "label", paramType = "query", required = false, value = "Sequence Ontology name", dataType = "string"),
             @ApiImplicitParam(name = "definition", paramType = "query", required = false, value = "Sequence Ontology definition", dataType = "string"),
             @ApiImplicitParam(name = "applicationType", paramType = "header", required = true, defaultValue = "web", value = "Application Types", dataType = "string"),
             @ApiImplicitParam(name = "Accept-Language", paramType = "header", required = true, defaultValue = "en", value = "Accept-Language", dataType = "string")
