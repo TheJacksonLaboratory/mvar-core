@@ -2,9 +2,9 @@
 ### root would have this
 
 ## sort table columns
-ALTER TABLE strain MODIFY label varchar(255) AFTER so_id;
-ALTER TABLE strain MODIFY sub_class_of varchar(255) AFTER label;
-ALTER TABLE strain MODIFY definition text AFTER suc_class_of;
+ALTER TABLE sequence_ontology MODIFY label varchar(255) AFTER so_id;
+ALTER TABLE sequence_ontology MODIFY sub_class_of varchar(255) AFTER label;
+ALTER TABLE sequence_ontology MODIFY definition text AFTER suc_class_of;
 
 # this Sequence Ontology file has been generated with robot, an ontology tool
 # and was converted to TSV from an OWL file (found on https://github.com/The-Sequence-Ontology/SO-Ontologies/blob/master/Ontology_Files/so.owl)
