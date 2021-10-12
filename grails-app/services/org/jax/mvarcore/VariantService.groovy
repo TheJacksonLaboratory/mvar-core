@@ -91,9 +91,7 @@ abstract class VariantService {
                 }
             }
 
-
             if (strainParams) {
-
                 and {
                     variantStrains {
                         and {
@@ -153,7 +151,7 @@ abstract class VariantService {
                 }
             }
 
-            if ( dbSNPIdList) {
+            if (dbSNPIdList) {
                 and {
                     inList ("accession", dbSNPIdList)
                 }
