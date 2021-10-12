@@ -42,9 +42,9 @@ class LoadService {
         if (Gene.count() <= 0 && Allele.count() > 0) {
             loadMouseGenes()
         }
-        if (Strain.count() <= 0 && Allele.count() > 0) {
-            loadMouseStrains()
-        }
+//        if (Strain.count() <= 0 && Allele.count() > 0) {
+//            loadMouseStrains()
+//        }
         // we need to have transcripts inserted before as well as genes
         if (Transcript.count() > 0 && Gene.count() > 0 && !tableHasValues('gene_transcript')) {
             saveGeneTranscriptsRelationships()
@@ -53,6 +53,7 @@ class LoadService {
     }
 
     /**
+     * TODO Load from seed file (pulled from http://www.informatics.jax.org/downloads/reports/MGI_Strain.rpt)
      * public interface to start the strain data load
      * The Allele Table needs to be populated first. (We retrieved them using a Mysql csv upload as
      * it would take too long to upload them using the Query API
@@ -68,6 +69,19 @@ class LoadService {
         saveObjects(strainList, 1000)
     }
 
+    /**
+     * TODO load from seed file (in resources)
+     */
+    void loadTranscripts() {
+
+    }
+
+    /**
+     * TODO load from seed file (in resources)
+     */
+    void loadAlleles() {
+
+    }
     /**
      * public interface to start the gene data load
      */

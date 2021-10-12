@@ -1,0 +1,8 @@
+import org.jax.mvarcore.Imputed
+
+model {
+	Iterable<Imputed> imputedList
+}
+
+json tmpl.imputed(imputedList ?: [])
+

@@ -91,7 +91,7 @@ class StrainController {
             nickname = "strain/query",
             produces = "application/json",
             consumes = "application/json",
-            httpMethod = "GET",
+            httpMethod = "POST",
             response = Strain.class
     )
     @ApiResponses([
@@ -107,6 +107,7 @@ class StrainController {
             @ApiImplicitParam(name = "sortBy", paramType = "query", required = false, value = "Sorting condition", dataType = "string"),
             @ApiImplicitParam(name = "sortDirection", paramType = "query", required = false, value = "asc or desc", dataType = "string"),
             @ApiImplicitParam(name = "name", paramType = "query", required = false, value = "Strain name", dataType = "string"),
+            @ApiImplicitParam(name = "imputed", paramType = "query", required = false, value = "[0, 1, 2] where 0 is Sanger, 1 is snpgrid and 2 is mgi", dataType = "integer"),
             @ApiImplicitParam(name = "attributes", paramType = "query", required = false, value = "Strain attributes: 'inbred strain' for instance", dataType = "string"),
             @ApiImplicitParam(name = "primary_id", paramType = "query", required = false, value = "Strain Primary Identifier", dataType = "string"),
             @ApiImplicitParam(name = "applicationType", paramType = "header", required = true, defaultValue = "web", value = "Application Types", dataType = "string"),

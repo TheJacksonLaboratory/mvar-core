@@ -1,0 +1,5 @@
+id,name,source_version,url
+1,"Sanger v5",REL-1505,https://www.sanger.ac.uk/sanger/Mouse_SnpViewer/rel-1505
+2,"Sanger V7",REL-2005,https://www.sanger.ac.uk/data/mouse-genomes-project/
+3,"Sanger v4",REL-1410,https://www.sanger.ac.uk/sanger/Mouse_SnpViewer/rel-1410
+4,"Sanger v6",REL-1807,https://www.sanger.ac.uk/data/mouse-genomes-project/

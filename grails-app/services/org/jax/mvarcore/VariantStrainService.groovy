@@ -12,8 +12,6 @@ class VariantStrainService {
      * @return
      */
     Map<String, Object> query(Map params) {
-
-
         log.info('query params: ' + params)
         println(params)
 
@@ -110,7 +108,7 @@ class VariantStrainService {
         Long count = results.totalCount
 
         // get all mvar strains
-        List<MvarStrains> strainList = MvarStrains.all
+        List<MvarStrain> strainList = MvarStrain.all
         // infer all missing variantStrain distribution
         for (Variant variant : results) {
             Set<VariantStrain> variantStrainList = variant.variantStrains
@@ -119,7 +117,7 @@ class VariantStrainService {
             for (VariantStrain variantStrain : variantStrainList) {
                 existingStrains.add(variantStrain.strain)
             }
-            for(MvarStrains strain : strainList) {
+            for(MvarStrain strain : strainList) {
                 if (!existingStrains.contains(strain.strain)) {
                     VariantStrain variantStrain = new VariantStrain()
                     variantStrain.strain = strain.strain
@@ -144,7 +142,7 @@ class VariantStrainService {
 
         List<Strain> strains = []
 
-        def mvarStrains = MvarStrains.all
+        def mvarStrains = MvarStrain.all
 
         strains = Strain.createCriteria().list(){
             and{

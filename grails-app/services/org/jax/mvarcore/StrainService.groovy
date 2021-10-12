@@ -61,6 +61,7 @@ abstract class StrainService {
                 }
             }
 
+
             //handle order by
 //            if (orderBy) {
 //                if (orderBy == 'symbol') {
@@ -76,6 +77,16 @@ abstract class StrainService {
 //                }
 //
 //            }
+        }
+        // imputed
+        if (param.imputed) {
+            def imputed = Byte.parseByte(params.imputed)
+
+            def mvarStrains = MvarStrain.getMvarStrains(imputed)
+            for (def result : results) {
+                if (!result.name in mvarStrains)
+                    results.remove(result)
+            }
         }
 
         Long count = results.totalCount

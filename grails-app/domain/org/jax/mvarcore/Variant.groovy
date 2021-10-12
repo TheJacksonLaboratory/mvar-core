@@ -21,6 +21,8 @@ class Variant {
     String impact
     String externalId
     String externalSource
+    String proteinPosition
+    String aminoAcidChange
     Gene gene
 
     static mapping = {
@@ -38,7 +40,7 @@ class Variant {
         version false
     }
 
-    static hasMany = [variantStrains: VariantStrain, transcripts: Transcript, genotypes: Genotype, sources: Source]
+    static hasMany = [variantStrains: VariantStrain, transcripts: Transcript, sources: Source]
 
     static constraints = {
 //        position unique: ['assembly', 'ref', 'alt']

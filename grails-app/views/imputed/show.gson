@@ -1,0 +1,7 @@
+import org.jax.mvarcore.Imputed
+
+model {
+	Imputed imputed
+}
+
+json tmpl.imputed(imputed)

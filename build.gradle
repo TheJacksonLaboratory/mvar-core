@@ -69,6 +69,7 @@ dependencies {
     implementation files('libs/groovy-ngs-utils.jar')
     testCompile files ('libs/groovy-ngs-utils.jar')
     implementation 'org.jetbrains:annotations:15.0'
+    implementation 'org.apache.commons:commons-lang3:3.2.1'
 }
 
 bootRun {
