@@ -42,14 +42,14 @@ class SequenceOntologyController {
     def index() {
         params.max = Math.min(params.max ?: 10, 100)
 
-        if (params.name){
+        if (params.label){
 
             def count = 0
             List<SequenceOntology> sequenceOntologies = []
 
-            count = SequenceOntology.countByLabel(params.name)
+            count = SequenceOntology.countByLabel(params.label)
             log.info("sequence ontology count = " + count)
-            sequenceOntologies =  SequenceOntology.findAllByLabel(params.name, [max: 10])
+            sequenceOntologies =  SequenceOntology.findAllByLabel(params.label, [max: 10])
 
             render(view: 'index', model: [sequenceOntologyList: sequenceOntologies, sequenceOntologyCount: count])
             return
