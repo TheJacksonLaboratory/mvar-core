@@ -7,7 +7,7 @@ import spock.lang.Specification
 class VariantStrainServiceSpec extends Specification implements ServiceUnitTest<VariantStrainService>, DataTest{
 
     def setup() {
-        mockDomain MvarStrains
+        mockDomain MvarStrain
         mockDomain Strain
         mockDomain VariantCanonIdentifier
         mockDomain Variant
@@ -23,8 +23,8 @@ class VariantStrainServiceSpec extends Specification implements ServiceUnitTest<
         Strain s1  = new Strain(name:'s1', primaryIdentifier:'PI_1').save(failOnError: true)
         Strain s2  = new Strain(name:'s2', primaryIdentifier:'PI_2').save(failOnError: true)
 
-        MvarStrains mvarS1 = new MvarStrains(name:'s1', strain: s1).save(failOnError: true)
-        MvarStrains mvarS2 = new MvarStrains(name:'s2', strain: s2).save(failOnError: true)
+        MvarStrain mvarS1 = new MvarStrain(name:'s1', strain: s1).save(failOnError: true)
+        MvarStrain mvarS2 = new MvarStrain(name:'s2', strain: s2).save(failOnError: true)
 
         VariantCanonIdentifier vci1 = new VariantCanonIdentifier(chr:'1', position: '12314', ref:'A', alt:'C',
                 variantRefTxt:'vrt').save(failOnError: true)
