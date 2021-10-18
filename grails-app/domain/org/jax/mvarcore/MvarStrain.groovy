@@ -12,7 +12,6 @@ class MvarStrain {
         version false
         sort name:"asc"
     }
-    static hasMany = [imputeds: Imputed]
 
     static namedQueries = {
         mvarStrainsWithImputed { anImputed ->
