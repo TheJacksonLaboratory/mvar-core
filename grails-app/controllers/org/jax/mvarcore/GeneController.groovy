@@ -43,11 +43,12 @@ class GeneController {
     def index(Integer max) {
         params.max = Math.min(max ?: 10, 100)
         if (params.symbol) {
-            def count = Gene.countByNameLike('%'+ params.symbol +'%')
-            println("gene count = " + count)
-            List<Gene> genes =  Gene.findAllBySymbolLike('%'+ params.symbol +'%', [max: 10])
+//            def count = Gene.countByNameLike('%'+ params.symbol +'%')
+//            println("gene count = " + count)
+            List<Gene> genes = geneService.getGenesVariants(params.symbol)
+//            List<Gene> genes =  Gene.findAllBySymbolLike('%'+ params.symbol +'%', [max: 10])
             //respond genes
-            render (view:'index', model:[geneList: genes, geneCount: count])
+            render (view:'index', model:[geneList: genes, geneCount: genes.size()])
             return
         }
         render (view:'index', model:[geneList: geneService.list(params), geneCount: geneService.count()])

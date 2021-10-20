@@ -1,19 +1,61 @@
 package org.jax.mvarcore
 
 import grails.gorm.services.Service
+import grails.gorm.transactions.Transactional
+import groovy.sql.Sql
+import org.hibernate.SessionFactory
+import org.hibernate.internal.SessionImpl
 
-@Service(Gene)
-abstract class GeneService {
+import java.sql.Connection
+import java.sql.SQLException
 
-    abstract Gene get(Serializable id)
+//@Service(Gene)
+@Transactional
+class GeneService {
 
-    abstract List<Gene> list(Map args)
+//    abstract Gene get(Serializable id)
+//
+//    abstract List<Gene> list(Map args)
+//
+//    abstract Long count()
+//
+//    abstract void delete(Serializable id)
+//
+//    abstract Gene save(Gene gene)
+    SessionFactory sessionFactory
 
-    abstract Long count()
+    def getGenesVariants(String geneSymbol) {
 
-    abstract void delete(Serializable id)
+        List<Gene> genes = []
 
-    abstract Gene save(Gene gene)
+        try {
+            final Sql sql = getSql()
+            def result = sql.rows("SELECT * FROM mvar_core.gene where id in (select distinct gene_id from variant);")
+            if (result) {
+                for (int i = 0; i < result.size(); i++) {
+                    if (((String)result.symbol[i]).toLowerCase().contains(geneSymbol)) {
+                        Gene gene = new Gene()
+                        gene.id = result.id[i]
+                        gene.name = result.name[i]
+                        gene.symbol = result.symbol[i]
+                        gene.chr = result.chr[i]
+                        gene.description = result.description[i]
+                        gene.ensemblGeneId = result.ensembl_gene_id[i]
+                        gene.entrezGeneId = result.entrez_gene_id[i]
+                        gene.type = result.type[i]
+                        gene.mgiId = result.mgi_id[i]
+                        genes.add(gene)
+                    }
+                }
+            }
+        }catch (SQLException exc) {
+            log.debug('The following SQLException occurred: ' + exc.toString())
+        } finally {
+            cleanUpGorm()
+        }
+
+        return genes
+    }
 
     Map<String, Object> query(Map params) {
 
@@ -108,4 +150,21 @@ abstract class GeneService {
         return queryResults
     }
 
+    protected Sql getSql() {
+        new Sql(getConnection())
+    }
+
+    /**
+     * @return a Connection with the underlying connection for the active session
+     */
+    protected Connection getConnection() {
+        SessionImpl sessionImpl = sessionFactory.currentSession as SessionImpl
+        sessionImpl.connection()
+    }
+
+    def cleanUpGorm() {
+        def session = sessionFactory.currentSession
+        session.flush()
+        session.clear()
+    }
 }
