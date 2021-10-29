@@ -22,6 +22,9 @@ class VariantStrainService {
         //offset
         Long offset = params.offset ? Long.valueOf(params.offset) : 0
 
+        // source
+        String source = params.source
+
         //REGION
         String chr = params.chr
         String startPos = params.startPos
@@ -108,7 +111,7 @@ class VariantStrainService {
         Long count = results.totalCount
 
         // get all mvar strains
-        List<MvarStrain> strainList = MvarStrain.all
+        List<MvarStrain> strainList = getChosenStrains(source)
         // infer all missing variantStrain distribution
         for (Variant variant : results) {
             Set<VariantStrain> variantStrainList = variant.variantStrains
@@ -136,13 +139,14 @@ class VariantStrainService {
 
     /**
      * find all unique strains with variants in the DB
+     * @param source can be "Sanger_V7 or SNPGrid_V1"
      * @return
      */
-    List<Strain> getDBStrains() {
+    List<Strain> getDBStrains(String source) {
 
         List<Strain> strains = []
 
-        def mvarStrains = MvarStrain.all
+        def mvarStrains = getChosenStrains(source)
 
         strains = Strain.createCriteria().list(){
             and{
@@ -151,6 +155,18 @@ class VariantStrainService {
             order('name', 'asc')
         }
         return strains
+    }
+
+    def getChosenStrains(def source) {
+        switch (source) {
+            case "Sanger_V7":
+                return MvarStrain.findAllByIdBetween(1, 52)
+            case "SNPGrid_V1":
+                MvarStrain.all
+            default:
+                return MvarStrain.all
+
+        }
     }
 
 }

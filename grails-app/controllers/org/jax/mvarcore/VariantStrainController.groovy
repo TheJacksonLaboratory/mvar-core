@@ -32,6 +32,7 @@ class VariantStrainController {
     @ApiImplicitParams([
             @ApiImplicitParam(name = "max", paramType = "query", required = false, value = "Max number of results", dataType = "integer"),
             @ApiImplicitParam(name = "offset", paramType = "query", required = false, value = "Offset value", dataType = "long"),
+            @ApiImplicitParam(name = "source", paramType = "query", required = false, value = "Source name: can be \"Sanger_V7\" or \"SNPGrid_V1\"", dataType = "string"),
             @ApiImplicitParam(name = "gene", paramType = "query", required = false, value = "Gene symbol", dataType = "string"),
             @ApiImplicitParam(name = "chr", paramType = "query", required = false, value = "Chromosome", dataType = "string"),
             @ApiImplicitParam(name = "startPos", paramType = "query", required = false, value = "Start position", dataType = "long"),
@@ -55,7 +56,10 @@ class VariantStrainController {
 
         log.info("params =" + params)
         println("params =" + params)
-
+        if (!params.source) {
+            render(status: 400, text: 'Missing "source" parameter in the JSON payload.')
+            return
+        }
         def genesMap = [genes: params.list('gene')]
         def varTypesMap = [types: params.list('type')]
         def impactsMap = [impacts: params.list('impact')]
@@ -63,7 +67,8 @@ class VariantStrainController {
         def hgvsMap = [hgvsList:  params.list('hgvs')]
         def mvarIdMap = [mvarIdList: params.list('mvarId')]
         def dbSNPidList = [dbSNPidList: params.list('dbSNPid')]
-        def paramsMap = genesMap + varTypesMap + impactsMap + consequencesMap + hgvsMap + mvarIdMap + dbSNPidList + params
+        def strainList = [strainList: params.list('strain')]
+        def paramsMap = genesMap + varTypesMap + impactsMap + consequencesMap + hgvsMap + mvarIdMap + dbSNPidList + strainList + params
 
         Map<String, Object> queryResults = variantStrainService.query(paramsMap)
 
@@ -88,9 +93,14 @@ class VariantStrainController {
             @ApiResponse(code = 404,
                     message = "Method Not Found")
     ])
+    @ApiImplicitParam(name = "source", paramType = "query", required = false, value = "Source name: can be \"Sanger_V7\" or \"SNPGrid_V1\"", dataType = "string")
     def strainsInDB() {
 
-        List<Strain> strainsResults = variantStrainService.getDBStrains()
+        if(!params.source) {
+            render(status: 400, text: 'Missing "source" parameter in the JSON payload.')
+            return
+        }
+        List<Strain> strainsResults = variantStrainService.getDBStrains((String)params.source)
 
         log.info('Strains with data in DB =' + strainsResults.size())
 
