@@ -13,27 +13,19 @@ import java.sql.SQLException
 @Transactional
 class GeneService {
 
-//    abstract Gene get(Serializable id)
-//
-//    abstract List<Gene> list(Map args)
-//
-//    abstract Long count()
-//
-//    abstract void delete(Serializable id)
-//
-//    abstract Gene save(Gene gene)
     SessionFactory sessionFactory
+    // List of Mvar Genes
+    List<Gene> mvarGenes
 
-    def getGenesVariants(String geneSymbol) {
+    def getGenesVariants(String geneSymbol, int max) {
 
-        List<Gene> genes = []
-
-        try {
-            final Sql sql = getSql()
-            def result = sql.rows("SELECT * FROM mvar_core.gene where id in (select distinct gene_id from variant);")
-            if (result) {
-                for (int i = 0; i < result.size(); i++) {
-                    if (((String)result.symbol[i]).toLowerCase().contains(geneSymbol)) {
+        if (!mvarGenes) {
+            mvarGenes = []
+            try {
+                final Sql sql = getSql()
+                def result = sql.rows("SELECT * FROM mvar_core.gene where id in (select distinct gene_id from variant);")
+                if (result) {
+                    for (int i = 0; i < result.size(); i++) {
                         Gene gene = new Gene()
                         gene.id = result.id[i]
                         gene.name = result.name[i]
@@ -44,16 +36,26 @@ class GeneService {
                         gene.entrezGeneId = result.entrez_gene_id[i]
                         gene.type = result.type[i]
                         gene.mgiId = result.mgi_id[i]
-                        genes.add(gene)
+                        mvarGenes.add(gene)
                     }
                 }
+            }catch (SQLException exc) {
+                log.debug('The following SQLException occurred: ' + exc.toString())
+            } finally {
+                cleanUpGorm()
             }
-        }catch (SQLException exc) {
-            log.debug('The following SQLException occurred: ' + exc.toString())
-        } finally {
-            cleanUpGorm()
         }
-
+        int idx = 0
+        List<Gene> genes = []
+        for (int i = 0; i < mvarGenes.size(); i++) {
+            // limit number of genes returned to max
+            if (idx == max)
+                return genes
+            if (mvarGenes.get(i).symbol.toLowerCase().contains(geneSymbol)) {
+                genes.add(mvarGenes.get(i))
+                idx++
+            }
+        }
         return genes
     }
 
