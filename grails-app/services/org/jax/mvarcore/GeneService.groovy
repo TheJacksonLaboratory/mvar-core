@@ -51,7 +51,7 @@ class GeneService {
             // limit number of genes returned to max
             if (idx == max)
                 return genes
-            if (mvarGenes.get(i).symbol.toLowerCase().contains(geneSymbol)) {
+            if (mvarGenes.get(i).symbol.toLowerCase().contains(geneSymbol) && !genes.contains(mvarGenes.get(i))) {
                 genes.add(mvarGenes.get(i))
                 idx++
             }
