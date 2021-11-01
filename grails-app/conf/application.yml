@@ -79,25 +79,62 @@ hibernate:
 dataSource:
     pooled: true
     jmxExport: true
-#    driverClassName: org.mariadb.jdbc.Driver
-#    dialect: org.hibernate.dialect.MariaDB53Dialect
     driverClassName: com.mysql.cj.jdbc.Driver
     dialect: org.hibernate.dialect.MySQL5InnoDBDialect
-    username: mvar_core
-    password: mvar_core_p@55
+    username:
+    password: 
     configClass: org.jax.mvarcore.FieldAccessHibernateConfiguration
-#    h2DataSource:
-#        pooled: true
-#        jmxExport: true
-#        driverClassName: org.h2.Driver
-#        username: sa
-#        password: ''
+    properties:
+        minIdle: 5
+        maxIdle: 25
+        maxWait: 10000
+        maxAge: 10 * 60000
+        timeBetweenEvictionRunsMillis: 5000
+        minEvictableIdleTimeMillis: 60000
+        validationQuery: "SELECT 1"
+        validationQueryTimeout: 3
+        validationInterval: 15000
+        testOnBorrow: true
+        testWhileIdle: true
+        testOnReturn: false
+        jdbcInterceptors: "ConnectionState;StatementCache(max=200)"
+        defaultTransactionIsolation: java.sql.Connection.TRANSACTION_READ_COMMITTED
+        dbProperties:
+            # Mysql specific driver properties
+            # http://dev.mysql.com/doc/connector-j/en/connector-j-reference-configuration-properties.html
+            # let Tomcat JDBC Pool handle reconnecting
+            autoReconnect: false
+            # truncation behaviour
+            jdbcCompliantTruncation: false
+            # mysql 0-date conversion
+            zeroDateTimeBehavior: 'convertToNull'
+            # Tomcat JDBC Pool's StatementCache is used instead, so disable mysql driver's cache
+            cachePrepStmts: false
+            cacheCallableStmts: false
+            # Tomcat JDBC Pool's StatementFinalizer keeps track
+            dontTrackOpenResources: true
+            # performance optimization: reduce number of SQLExceptions thrown in mysql driver code
+            holdResultsOpenOverStatementClose: true
+            # enable MySQL query cache - using server prep stmts will disable query caching
+            useServerPrepStmts: false
+            # metadata caching
+            cacheServerConfiguration: true
+            cacheResultSetMetadata: true
+            metadataCacheSize: 100
+            # timeouts for TCP/IP
+            connectTimeout: 15000
+            socketTimeout: 120000
+            # timer tuning (disable)
+            maintainTimeStats: false
+            enableQueryTimeouts: false
+            # misc tuning
+            noDatetimeStringSync: true
 
 environments:
     development:
         dataSource:
             dbCreate: update
-            url: jdbc:mysql://localhost:3306/mvar_core?cachePrepStmts=true&prepStmtCacheSize=350&prepStmtCacheSqlLimit=2048&useServerPrepStmts=true&rewriteBatchedStatements=true&autoReconnect=true&useUnicode=yes&characterEncoding=UTF-8&serverTimezone=UTC
+            url: jdbc:mysql://localhost:3306/mvar_core?cachePrepStmts=true&prepStmtCacheSize=350&prepStmtCacheSqlLimit=2048&useServerPrepStmts=true&rewriteBatchedStatements=true&useUnicode=yes&characterEncoding=UTF-8&serverTimezone=UTC
             #url: jdbc:mysql://localhost:3306/mvar_core?autoReconnect=true&useUnicode=yes&characterEncoding=UTF-8&serverTimezone=UTC
         uploads:
             vcf: "${user.home}/MVAR/vcf_uploads"
@@ -107,26 +144,7 @@ environments:
             url: jdbc:h2:mem:testDb;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
     production:
         dataSource:
-            dbCreate: none
-            url: jdbc:mysql://localhost:3306/mvar_core?cachePrepStmts=true&prepStmtCacheSize=350&prepStmtCacheSqlLimit=2048&useServerPrepStmts=true&rewriteBatchedStatements=true&autoReconnect=true&useUnicode=yes&characterEncoding=UTF-8&serverTimezone=UTC
+            dbCreate: update
+            url: jdbc:mysql://localhost:3306/mvar_core?useServerPrepStmts=true&rewriteBatchedStatements=true&useUnicode=yes&characterEncoding=UTF-8&serverTimezone=UTC
         uploads:
             vcf: "${user.home}/MVAR/vcf_uploads"
-#            url: jdbc:h2:./prodDb;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
-#            properties:
-#                jmxEnabled: true
-#                initialSize: 5
-#                maxActive: 50
-#                minIdle: 5
-#                maxIdle: 25
-#                maxWait: 10000
-#                maxAge: 600000
-#                timeBetweenEvictionRunsMillis: 5000
-#                minEvictableIdleTimeMillis: 60000
-#                validationQuery: SELECT 1
-#                validationQueryTimeout: 3
-#                validationInterval: 15000
-#                testOnBorrow: true
-#                testWhileIdle: true
-#                testOnReturn: false
-#                jdbcInterceptors: ConnectionState
-#                defaultTransactionIsolation: 2 # TRANSACTION_READ_COMMITTED
