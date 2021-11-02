@@ -37,20 +37,27 @@ class GeneController {
     @ApiImplicitParams([
             @ApiImplicitParam(name = "max", paramType = "query", required = false, value = "Max number of results", dataType = "integer"),
             @ApiImplicitParam(name = "symbol", paramType = "query", required = false, value = "Gene Symbol", dataType = "string"),
+            @ApiImplicitParam(name = "mvar", paramType = "query", required = false, value = "false or true, if true search is done through all genes", dataType = "boolean"),
             @ApiImplicitParam(name = "applicationType", paramType = "header", required = true, defaultValue = "web", value = "Application Types", dataType = "string"),
             @ApiImplicitParam(name = "Accept-Language", paramType = "header", required = true, defaultValue = "en", value = "Accept-Language", dataType = "string")
     ])
     def index(Integer max) {
         params.max = Math.min(max ?: 10, 100)
-        if (params.symbol) {
-//            def count = Gene.countByNameLike('%'+ params.symbol +'%')
-//            println("gene count = " + count)
-            List<Gene> genes = geneService.getGenesVariants(params.symbol, 10)
-//            List<Gene> genes =  Gene.findAllBySymbolLike('%'+ params.symbol +'%', [max: 10])
+
+        // Search through all genes
+        if (!params.mvar && params.symbol) {
+            def count = Gene.countByNameLike('%'+ params.symbol +'%')
+            println("gene count = " + count)
+            List<Gene> genes =  Gene.findAllBySymbolLike('%'+ params.symbol +'%', [max: 10])
             //respond genes
             render (view:'index', model:[geneList: genes, geneCount: genes.size()])
             return
+        } else if (params.mvar && params.symbol) { // search through mvar genes
+            Map<String, Object> genes = geneService.getMvarGenes(params)
+            render (view:'index', model:[geneList: genes.mvarGeneList, geneCount: genes.mvarGeneCount])
+            return
         }
+
         render (view:'index', model:[geneList: geneService.list(params), geneCount: geneService.count()])
     }
 
@@ -117,46 +124,4 @@ class GeneController {
         log.info('results gene count =' + queryResults.geneCount)
         render(view: 'index', model: [geneList: queryResults.geneList, geneCount: queryResults.geneCount])
     }
-//    def save(Gene allele) {
-//        if (allele == null) {
-//            render status: NOT_FOUND
-//            return
-//        }
-//
-//        try {
-//            geneService.save(allele)
-//        } catch (ValidationException e) {
-//            respond allele.errors, view:'create'
-//            return
-//        }
-//
-//        respond allele, [status: CREATED, view:"show"]
-//    }
-//
-//    def update(Gene allele) {
-//        if (allele == null) {
-//            render status: NOT_FOUND
-//            return
-//        }
-//
-//        try {
-//            geneService.save(allele)
-//        } catch (ValidationException e) {
-//            respond allele.errors, view:'edit'
-//            return
-//        }
-//
-//        respond allele, [status: OK, view:"show"]
-//    }
-//
-//    def delete(Long id) {
-//        if (id == null) {
-//            render status: NOT_FOUND
-//            return
-//        }
-//
-//        geneService.delete(id)
-//
-//        render status: NO_CONTENT
-//    }
 }
