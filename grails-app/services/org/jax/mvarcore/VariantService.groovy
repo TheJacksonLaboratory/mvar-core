@@ -67,10 +67,18 @@ abstract class VariantService {
         //CAID
         def mvarIdList = params.list('mvarId')
         List<VariantCanonIdentifier> canonVarList = []
-        for (id in mvarIdList){
-            def vca = VariantCanonIdentifier.findByCaID(id)
-            if (vca){
-                canonVarList.push(vca)
+        if (mvarIdList) {
+            for (id in mvarIdList) {
+                def vca = VariantCanonIdentifier.findByCaID(id)
+                if (vca) {
+                    canonVarList.push(vca)
+                }
+            }
+            // if no result we return the result query
+            if (canonVarList.size() == 0) {
+                queryResults.variantList = []
+                queryResults.variantCount = 0
+                return queryResults
             }
         }
 
