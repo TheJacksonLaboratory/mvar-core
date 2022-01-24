@@ -38,6 +38,7 @@ class GeneController {
             @ApiImplicitParam(name = "max", paramType = "query", required = false, value = "Max number of results", dataType = "integer"),
             @ApiImplicitParam(name = "symbol", paramType = "query", required = false, value = "Gene Symbol", dataType = "string"),
             @ApiImplicitParam(name = "mvar", paramType = "query", required = false, value = "false or true, if true search is done through all genes", dataType = "boolean"),
+            @ApiImplicitParam(name = "all", paramType = "query", required = false, value = "if true (or present), all mvar Genes are returned.", dataType = "boolean"),
             @ApiImplicitParam(name = "applicationType", paramType = "header", required = true, defaultValue = "web", value = "Application Types", dataType = "string"),
             @ApiImplicitParam(name = "Accept-Language", paramType = "header", required = true, defaultValue = "en", value = "Accept-Language", dataType = "string")
     ])
@@ -54,6 +55,11 @@ class GeneController {
             return
         } else if (params.mvar && params.symbol) { // search through mvar genes
             Map<String, Object> genes = geneService.getMvarGenes(params)
+            render (view:'index', model:[geneList: genes.mvarGeneList, geneCount: genes.mvarGeneCount])
+            return
+        }
+        if (params.all) {
+            Map<String, Object> genes = geneService.getAllMvarGenes()
             render (view:'index', model:[geneList: genes.mvarGeneList, geneCount: genes.mvarGeneCount])
             return
         }

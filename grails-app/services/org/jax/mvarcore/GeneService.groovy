@@ -44,6 +44,20 @@ abstract class GeneService {
         return queryResults
     }
 
+    def getAllMvarGenes() {
+        Map<String, Object> queryResults = [mvarGeneList:[], mvarGeneCount:0L]
+        def mvarGenes = MvarGene.all
+        Long count = mvarGenes.gene.size()
+        def genes
+        if (mvarGenes.gene.size() > 10)
+            genes = mvarGenes.gene.subList(0, 10)
+        else
+            genes = mvarGenes.gene
+        queryResults.mvarGeneList = genes
+        queryResults.mvarGeneCount = genes.size()
+        return queryResults
+    }
+
     Map<String, Object> query(Map params) {
 
         Map<String, Object> queryResults = [geneList:[], geneCount:0L]
