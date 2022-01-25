@@ -1,0 +1,7 @@
+import org.jax.mvarcore.MvarGene
+
+model {
+	MvarGene mvarGene
+}
+
+json g.render(mvarGene, [resolveTemplate: false])

@@ -1,0 +1,7 @@
+import org.jax.mvarcore.MvarGene
+
+model {
+	MvarGene mvarGene
+}
+
+json tmpl.mvarGene(mvarGene)

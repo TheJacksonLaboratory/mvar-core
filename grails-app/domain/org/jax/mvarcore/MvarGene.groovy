@@ -7,9 +7,10 @@ class MvarGene {
     Gene gene
 
     static constraints = {
+        symbol nullable: false
     }
     static mapping = {
         version: false
-        sort symbol:"asc"
+        sort symbol:'asc'
     }
 }
