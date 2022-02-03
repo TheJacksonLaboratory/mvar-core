@@ -2,7 +2,7 @@
 grails:
     config:
         locations:
-            - file:///${user.home}/.grails/mvar/mvar_core/development-config.yml
+            - file:///${user.home}/.grails/mvar/mvar_core/prod-config.yml
     profile: rest-api
     codegen:
         defaultPackage: mvar.core
@@ -81,8 +81,8 @@ dataSource:
     jmxExport: true
     driverClassName: com.mysql.cj.jdbc.Driver
     dialect: org.hibernate.dialect.MySQL5InnoDBDialect
-    username:
-    password: 
+    # username:
+    # password:
     configClass: org.jax.mvarcore.FieldAccessHibernateConfiguration
     properties:
         minIdle: 5

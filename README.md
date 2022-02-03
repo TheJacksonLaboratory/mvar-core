@@ -1,3 +1,8 @@
+# How to build project
+
+In order to build the MVAR backend as an executable war file, which can then be deployed in a tomcat container or even run by itself the following can be done. Once the project has been checked out from this repository, go to the project root folder and then run the command <code>./gradlew assemble</code>.
+This will generate a war file in <code>mvar-core/build/libs/</code> which can then be used to run on a server of Tomcat container. 
+
 # Database set up and insertion of Variants
 
 

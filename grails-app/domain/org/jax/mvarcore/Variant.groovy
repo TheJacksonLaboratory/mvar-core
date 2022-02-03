@@ -30,6 +30,7 @@ class Variant {
 		variantHgvsNotation index: true
         variantRefTxt index: true
         functionalClassCode index: true
+        accession index: true
         chr sqlType: "char(3)"
         ref sqlType: "char(100)"
         variantRefTxt sqlType: "varchar(350)"

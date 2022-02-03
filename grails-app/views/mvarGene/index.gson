@@ -1,0 +1,8 @@
+import org.jax.mvarcore.MvarGene
+
+model {
+	Iterable<MvarGene> mvarGeneList
+}
+
+json tmpl.mvarGene(mvarGeneList ?: [])
+
