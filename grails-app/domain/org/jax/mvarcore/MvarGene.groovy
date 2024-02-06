@@ -10,7 +10,7 @@ class MvarGene {
         symbol nullable: false
     }
     static mapping = {
-        version: false
         sort symbol:'asc'
+        version false
     }
 }

@@ -17,8 +17,12 @@ class VcfFileUploadRunner implements CommandLineRunner {
     @Override
     void run(String...args) throws Exception {
         String folderPath
-        if (args != null && args.size() > 0) {
+        int batchSize = -1
+        if (args != null && args.size() == 1) {
             folderPath = args[0]
+        } else if (args != null && args.size() == 2) {
+            folderPath = args[0]
+            batchSize = Integer.valueOf(args[1])
         } else {
             return
         }
@@ -32,7 +36,7 @@ class VcfFileUploadRunner implements CommandLineRunner {
             String path = it.path
             File file = new File(path)
             if (file.isFile() && (path.endsWith('.gz')||(path.endsWith('.vcf'))))
-                vcfFileUploadService.loadVCF(file)
+                vcfFileUploadService.loadVCF(file, batchSize)
         }
     }
 

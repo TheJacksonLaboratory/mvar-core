@@ -3,7 +3,7 @@ package org.jax.mvarcore
 import grails.gorm.transactions.Transactional
 import grails.plugins.rest.client.RestBuilder
 import grails.plugins.rest.client.RestResponse
-
+import groovy.json.JsonSlurper
 import org.grails.datastore.gorm.GormEntity
 import org.grails.web.json.JSONArray
 import org.grails.web.json.JSONObject
@@ -12,7 +12,6 @@ import org.hibernate.internal.SessionImpl
 import java.sql.Connection
 import java.sql.PreparedStatement
 import java.sql.ResultSet
-import java.sql.ResultSetMetaData
 import java.sql.Statement
 
 
@@ -89,10 +88,12 @@ class LoadService {
         println("*** GENE LOAD **")
         log.info("*** GENE LOAD **")
         //query all mgd mouse genes where there is an entrez id or ensembl id present
-        String geneQuery = '<query name="" model="genomic" view="Gene.primaryIdentifier Gene.symbol Gene.name Gene.description Gene.mgiType Gene.chromosome.symbol Gene.synonyms.value Gene.crossReferences.identifier" longDescription="" sortOrder="Gene.symbol asc" constraintLogic="A and (B or C)"><constraint path="Gene.organism.species" code="A" op="=" value="musculus"/><constraint path="Gene.crossReferences.source.name" code="B" op="=" value="Ensembl Gene Model"/><constraint path="Gene.crossReferences.source.name" code="C" op="=" value="Entrez Gene"/></query>'
-        String url = "${MM_URL}"
-        String fullQuery = url + '?query=' + geneQuery + '&format=jsonobjects'
-        def geneList = loadData(fullQuery, 'gene')
+//        String geneQuery = '<query name="" model="genomic" view="Gene.primaryIdentifier Gene.symbol Gene.name Gene.description Gene.mgiType Gene.chromosome.symbol Gene.synonyms.value Gene.crossReferences.identifier" longDescription="" sortOrder="Gene.symbol asc" constraintLogic="A and (B or C)"><constraint path="Gene.organism.species" code="A" op="=" value="musculus/domesticus"/><constraint path="Gene.crossReferences.source.name" code="B" op="=" value="Ensembl Gene Model"/><constraint path="Gene.crossReferences.source.name" code="C" op="=" value="Entrez Gene"/></query>'
+//        String url = "${MM_URL}"
+//        String fullQuery = url + '?query=' + geneQuery + '&format=jsonobjects'
+//        def geneList = loadData(fullQuery, 'gene')
+
+        def geneList = loadDataFromFile('/Users/elkasb/git/mvar-core/src/main/resources/genes.json', 'gene')
         saveObjects(geneList, 1000)
     }
 
@@ -148,6 +149,12 @@ class LoadService {
         return parseJsonData(jsonResult, type)
     }
 
+    protected List<GormEntity> loadDataFromFile(String filePath, String type) {
+        def jsonSlurper = new JsonSlurper()
+        def jsonResult = jsonSlurper.parse(new File(filePath)).results
+        return parseJsonData(jsonResult, type)
+    }
+
     private static String[] getSynonyms(JSONArray jsonArray) {
         String[] synonyms = new String[jsonArray.size()]
         for (int i = 0; i < jsonArray.size(); i++) {
@@ -172,7 +179,7 @@ class LoadService {
             JSONObject mmProps = it
 
             if (type == 'gene') {
-                Map ids = getEntrezEnsemblIds((JSONArray) mmProps.get('crossReferences'))
+                Map ids = getEntrezEnsemblIds(new JSONArray(mmProps.get('crossReferences')))
                 obj = new Gene(
                         mgiId: mmProps.get('primaryIdentifier'),
                         symbol: mmProps.get('symbol'),
@@ -213,7 +220,7 @@ class LoadService {
 
     }
 
-    private Map<String, String> getEntrezEnsemblIds(JSONArray ids) {
+    private static Map<String, String> getEntrezEnsemblIds(JSONArray ids) {
         Map<String, String> mapIds = new HashMap<String, String>()
         // both entrez and ensembl present
         if (ids.size() == 2) {
