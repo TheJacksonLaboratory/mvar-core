@@ -7,8 +7,6 @@ class VariantCanonIdentifier {
 
     static constraints = {
         caID nullable: true
-        variantRefTxt unique: true
-//        chr unique: ['position', 'ref', 'alt']
     }
 
     static mapping = {
