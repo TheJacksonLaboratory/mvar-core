@@ -40,6 +40,7 @@ class VariantStrainController {
             @ApiImplicitParam(name = "type", paramType = "query", required = false, value = "Variant type: can be SNP, INS or DEL", dataType = "string"),
             @ApiImplicitParam(name = "impact", paramType = "query", required = false, value = "Impact", dataType = "string"),
             @ApiImplicitParam(name = "mvarId", paramType = "query", required = false, value = "MVAR id: MCA_*", dataType = "string"),
+            @ApiImplicitParam(name = "assembly", paramType = "query", required = true, value = "Genome reference: can be mm10 or mm39. Default is mm39.", dataType = "string"),
             @ApiImplicitParam(name = "hgvs", paramType = "query", required = false, value = "HGVS genomic nomenclature"),
             @ApiImplicitParam(name = "dbSNPid", paramType = "query", required = false, value = "dbSNP ID"),
             @ApiImplicitParam(name = "consequence", paramType = "query", required = false, value = "Molecular Consequence", dataType = "string"),
@@ -93,7 +94,7 @@ class VariantStrainController {
             @ApiResponse(code = 404,
                     message = "Method Not Found")
     ])
-    @ApiImplicitParam(name = "source", paramType = "query", required = false, value = "Source name: can be \"Sanger_V7\" or \"SNPGrid_V1\"", dataType = "string")
+    @ApiImplicitParam(name = "source", paramType = "query", required = false, value = "Source name: can be \"Sanger_V7\", \"Sanger_V8\" or \"SNPGrid_V1\"", dataType = "string")
     def strainsInDB() {
 
         if(!params.source) {

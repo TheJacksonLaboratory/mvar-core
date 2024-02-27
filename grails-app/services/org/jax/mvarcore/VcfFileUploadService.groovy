@@ -14,7 +14,6 @@ import org.jax.mvarcore.parser.InfoParser
 import java.sql.Connection
 import java.sql.PreparedStatement
 import java.sql.ResultSet
-import java.sql.SQLException
 import java.sql.Statement
 import java.sql.Types
 
@@ -593,7 +592,8 @@ class VcfFileUploadService {
     private static TranscriptContainer loadNewTranscript(RestBuilder rest, String url, String id, List<String> idsAndMostPathogenic) {
         String fullQuery = url + id + '?content-type=application/json;expand=1'
         RestResponse resp = rest.get(fullQuery)
-        log.info("Request response = " + resp.statusCode.value())
+//        log.info("Request response = " + resp.statusCode.value())
+        println("Request response = " + resp.statusCode.value())
         JSONObject jsonResult
         String respString = resp.getBody()
 
@@ -603,7 +603,8 @@ class VcfFileUploadService {
             respString = respString.substring(begin, end)
             jsonResult = new JSONObject(respString)
         } else {
-            log.error("Response to mouse mine data request: " + resp.statusCode.value() + " restResponse.text= " + resp.text)
+//            log.error("Response to mouse mine data request: " + resp.statusCode.value() + " restResponse.text= " + resp.text)
+            println("Response to mouse mine data request: " + resp.statusCode.value() + " restResponse.text= " + resp.tex)
             return null
         }
         int start = jsonResult.get('start') as int
