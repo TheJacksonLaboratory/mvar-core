@@ -12,7 +12,7 @@ class VariantCanonIdentifier {
     static mapping = {
         variantRefTxt index: true
         caID index: true
-        variantRefTxt sqlType: "varchar(350)"
+        variantRefTxt sqlType: "varchar(10000)"
         version false
     }
 
