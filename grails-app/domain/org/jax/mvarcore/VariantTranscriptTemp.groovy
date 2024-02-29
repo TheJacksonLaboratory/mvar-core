@@ -7,6 +7,7 @@ class VariantTranscriptTemp {
     String transcriptFeatureIds
 
     static mapping = {
+        variantRefTxt sqlType: "varchar(700)"
         version false
     }
     static constraints = {
