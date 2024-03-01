@@ -7,6 +7,8 @@ class Mm10mm39Temp {
     static mapping = {
         refTxtMm10 index: true
         refTxtMm39 index: true
+        refTxtMm10 sqlType: "varchar(700)"
+        refTxtMm39 sqlType: "varchar(700)"
         version false
     }
 }
