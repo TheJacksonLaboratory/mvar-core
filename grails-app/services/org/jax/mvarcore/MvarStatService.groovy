@@ -32,6 +32,8 @@ class MvarStatService {
                 stat.strainAnalysisCount = result.strain_analysis_count[0]
                 stat.transcriptAnalysisCount = result.transcript_analysis_count[0]
                 stat.geneAnalysisCount = result.gene_analysis_count[0]
+                stat.sourceCount = result.source_count[0]
+                stat.assemblyCount = result.assembly_count[0]
             }
         } catch (SQLException exc) {
             log.debug('The following SQLException occurred: ' + exc.toString())

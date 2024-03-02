@@ -15,6 +15,8 @@ class MvarStat {
     int strainAnalysisCount
     int geneAnalysisCount
     int transcriptAnalysisCount
+    int sourceCount
+    int assemblyCount
 
     static mapping = {
         version false
