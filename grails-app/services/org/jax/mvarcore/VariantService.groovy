@@ -15,10 +15,17 @@ abstract class VariantService {
 
     abstract Variant save(Variant variant)
 
+    static assemblies = ['mm10':'grcm38', 'mm39':'GRCm39']
+
     Map<String, Object> query(Map params){
 
         Map<String, Object> queryResults = [variantList:[], variantCount:0L]
 
+        // assembly
+        String assembly = assemblies.mm39
+        if (params.assembly) {
+            assembly = assemblies.get(params.assembly)
+        }
         //max
         Integer max = params.max? Integer.valueOf(params.max): 10 as Integer
         //offset
@@ -185,7 +192,9 @@ abstract class VariantService {
                     between('position', startPos.toLong(), endPos.toLong())
                 }
             }
-
+            and {
+                eq('assembly', assembly)
+            }
             //handle order by
             if (orderBy) {
                 if (orderBy == 'symbol') {

@@ -159,10 +159,10 @@ class VariantStrainService {
 
     def getChosenStrains(def source) {
         switch (source) {
-            case "Sanger_V7":
+            case "Sanger_V7"||"Sanger_V8":
                 return MvarStrain.findAllByIdBetween(1, 52)
             case "SNPGrid_V1":
-                MvarStrain.all
+                return MvarStrain.all
             default:
                 return MvarStrain.all
 

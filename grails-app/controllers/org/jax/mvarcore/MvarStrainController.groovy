@@ -1,8 +1,5 @@
 package org.jax.mvarcore
 
-
-import grails.rest.*
-import grails.converters.*
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiImplicitParam
 import io.swagger.annotations.ApiImplicitParams

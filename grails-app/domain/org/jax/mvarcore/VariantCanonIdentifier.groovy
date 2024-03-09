@@ -7,14 +7,12 @@ class VariantCanonIdentifier {
 
     static constraints = {
         caID nullable: true
-        variantRefTxt unique: true
-//        chr unique: ['position', 'ref', 'alt']
     }
 
     static mapping = {
         variantRefTxt index: true
         caID index: true
-        variantRefTxt sqlType: "varchar(350)"
+        variantRefTxt sqlType: "varchar(700)"
         version false
     }
 

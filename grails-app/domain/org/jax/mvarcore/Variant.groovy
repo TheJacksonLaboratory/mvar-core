@@ -32,8 +32,10 @@ class Variant {
         functionalClassCode index: true
         accession index: true
         chr sqlType: "char(3)"
-        ref sqlType: "char(100)"
-        variantRefTxt sqlType: "varchar(350)"
+        ref sqlType: "varchar(700)"
+        alt sqlType: "varchar(700)"
+        variantHgvsNotation sqlType: "varchar(700)"
+        variantRefTxt sqlType: "varchar(700)"
         assembly sqlType: "varchar(12)"
         type sqlType: "varchar(6)"
         accession sqlType: "varchar(100)"

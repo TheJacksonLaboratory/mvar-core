@@ -14,7 +14,6 @@ import org.jax.mvarcore.parser.InfoParser
 import java.sql.Connection
 import java.sql.PreparedStatement
 import java.sql.ResultSet
-import java.sql.SQLException
 import java.sql.Statement
 import java.sql.Types
 
@@ -31,7 +30,7 @@ class VcfFileUploadService {
     boolean isRefAssembly
     private String assembly
 
-    private static final String VARIANT_CANON_INSERT = "insert into variant_canon_identifier (version, chr, position, ref, alt, variant_ref_txt) VALUES (0,?,?,?,?,?)"
+    private static final String VARIANT_CANON_INSERT = "insert into variant_canon_identifier (chr, position, ref, alt, variant_ref_txt) VALUES (?,?,?,?,?)"
     private static final String VARIANT_INSERT = "insert into variant (chr, position, alt, ref, type, functional_class_code, assembly, parent_ref_ind, parent_variant_ref_txt, variant_ref_txt, dna_hgvs_notation, protein_hgvs_notation, canon_var_identifier_id, gene_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
     private static final String VARIANT_STRAIN_INSERT = "insert into variant_strain (variant_strains_id, strain_id) VALUES (?, ?)"
     private static final String VARIANT_TRANSCRIPT_INSERT = "insert into variant_transcript (variant_transcripts_id, transcript_id, most_pathogenic) VALUES (?, ?, ?)"
@@ -65,7 +64,7 @@ class VcfFileUploadService {
         println("vcf File: " + vcfFileName)
         try {
             // get strain id
-            Long strainId = getStrainId(strainName);
+            Long strainId = getStrainId(strainName)
 
             persistData(vcfFile, strainId)
         } catch (Exception e) {
@@ -82,7 +81,7 @@ class VcfFileUploadService {
      * @param strainName
      * @return
      */
-    private Long getStrainId(String strainName) {
+    private static Long getStrainId(String strainName) {
 //        Statement selectStrainId = getConnection().createStatement();
 //        ResultSet result = selectStrainId.executeQuery("SELECT ID WHERE name LIKE " + strainName);
 //        result.next();
@@ -527,7 +526,7 @@ class VcfFileUploadService {
 
     }
 
-    private String concatenate(List<Map> annotations, String annotationKey) {
+    private static String concatenate(List<Map> annotations, String annotationKey) {
         String concatenationResult = ''
         StringBuilder strBuilder = new StringBuilder(8)
         for (Map annot : annotations) {
@@ -590,10 +589,11 @@ class VcfFileUploadService {
      * @param geneAndVariantIds
      * @return
      */
-    private TranscriptContainer loadNewTranscript(RestBuilder rest, String url, String id, List<String> idsAndMostPathogenic) {
+    private static TranscriptContainer loadNewTranscript(RestBuilder rest, String url, String id, List<String> idsAndMostPathogenic) {
         String fullQuery = url + id + '?content-type=application/json;expand=1'
         RestResponse resp = rest.get(fullQuery)
-        log.info("Request response = " + resp.statusCode.value())
+//        log.info("Request response = " + resp.statusCode.value())
+        println("Request response = " + resp.statusCode.value())
         JSONObject jsonResult
         String respString = resp.getBody()
 
@@ -603,7 +603,8 @@ class VcfFileUploadService {
             respString = respString.substring(begin, end)
             jsonResult = new JSONObject(respString)
         } else {
-            log.error("Response to mouse mine data request: " + resp.statusCode.value() + " restResponse.text= " + resp.text)
+//            log.error("Response to mouse mine data request: " + resp.statusCode.value() + " restResponse.text= " + resp.text)
+            println("Response to mouse mine data request: " + resp.statusCode.value() + " restResponse.text= " + resp.tex)
             return null
         }
         int start = jsonResult.get('start') as int
@@ -717,27 +718,21 @@ class VcfFileUploadService {
     }
 
 
-    private boolean isAcceptedAssembly(String inAssembly) {
+    private static boolean isAcceptedAssembly(String inAssembly) {
 
         //TODO define configuration for accepted assemblies
         List<String> assemblies = ['grcm38', 'ncbi37', 'ncbi36']
-        if (assemblies.contains(inAssembly))
-            return true
-        else
-            return false
+        return assemblies.contains(inAssembly)
     }
 
-    private boolean isRefAssembly(String inAssembly) {
+    private static boolean isRefAssembly(String inAssembly) {
 
         //TODO define configuration for reference assembly
         String refAssembly = 'grcm38'
-        if (inAssembly == refAssembly)
-            return true
-        else
-            return false
+        return inAssembly == refAssembly
     }
 
-    private List<gngs.Variant> parseVcf(String chromosome, File vcfFile, String type) {
+    private static List<gngs.Variant> parseVcf(String chromosome, File vcfFile, String type) {
         List<gngs.Variant> varList
         try {
             //vcfFileInputStream.line

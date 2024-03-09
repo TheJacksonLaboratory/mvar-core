@@ -5,7 +5,6 @@ import groovy.sql.Sql
 import org.hibernate.SessionFactory
 import org.hibernate.internal.SessionImpl
 
-import java.sql.Connection
 import java.sql.SQLException
 
 @Transactional
@@ -32,30 +31,44 @@ class MvarStatService {
                 stat.strainAnalysisCount = result.strain_analysis_count[0]
                 stat.transcriptAnalysisCount = result.transcript_analysis_count[0]
                 stat.geneAnalysisCount = result.gene_analysis_count[0]
+                stat.assemblies = result.assemblies[0]
             }
         } catch (SQLException exc) {
             log.debug('The following SQLException occurred: ' + exc.toString())
         } finally {
             cleanUpGorm()
         }
-//        def resultStrain = sql.rows("SELECT count(distinct strain_id) as strain_num FROM mvar_core.variant_strain;")
-//        def resultTranscript = sql.rows("SELECT count(distinct transcript_id) as transcript_num FROM mvar_core.variant_transcript;")
-//        def resultTranscript = sql.rows("SELECT count(distinct gene_id) as gene_num FROM mvar_core.variant;")
         def list = []
         list << stat
         return list
     }
 
     protected Sql getSql() {
-        new Sql(getConnection())
+        SessionImpl sessionImpl = sessionFactory.currentSession as SessionImpl
+        new Sql(sessionImpl.connection())
     }
 
     /**
-     * @return a Connection with the underlying connection for the active session
+     * Returns all sources in MVAR data
+     * @return
      */
-    protected Connection getConnection() {
-        SessionImpl sessionImpl = sessionFactory.currentSession as SessionImpl
-        sessionImpl.connection()
+    List getSources() {
+        def sources = []
+        try {
+            final Sql sql = getSql()
+            sql.eachRow("select * from  source where id in (select distinct source_id from variant_source);") { row ->
+                Source source = new Source()
+                source.name = row.name
+                source.sourceVersion = row.source_version
+                source.url = row.url
+                sources.add(source)
+            }
+        } catch (SQLException exc) {
+            log.debug('The following SQLException occurred: ' + exc.toString())
+        } finally {
+            cleanUpGorm()
+        }
+        return sources
     }
 
     def cleanUpGorm() {

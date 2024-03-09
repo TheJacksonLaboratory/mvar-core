@@ -1,65 +1,59 @@
 package org.jax.mvarcore
 
-import grails.gorm.services.Service
+import grails.gorm.transactions.Transactional
+import groovy.sql.Sql
+import org.hibernate.SessionFactory
+import org.hibernate.internal.SessionImpl
 
-@Service(Source)
-abstract class SourceService {
+import java.sql.SQLException
 
-    abstract Source get(Serializable id)
+@Transactional
+class SourceService {
 
-    abstract List<Source> list(Map args)
+    SessionFactory sessionFactory
 
-    abstract Long count()
-
-    abstract void delete(Serializable id)
-
-    abstract Source save(Source strain)
-
-    Map<String, Object> query(Map params) {
+    Map<String, Object> show() {
         Map<String, Object> queryResults = [sourceList:[], sourceCount:0L]
-
-        //max
-        Integer max = params.max? Integer.valueOf(params.max): 10 as Integer
-        //offset
-        Long offset = params.offset? Long.valueOf(params.offset) : 0
-
-        //sort by
-        String orderBy = params.sortBy
-        //sort direction
-        String orderDirection = params.sortDirection? params.sortDirection: 'asc'
-
-        println('query params: ' + params)
-
-        //name
-        def name = params.name
-
-        // source version
-        def sourceVersion = params.sourceVersion
-
         //generate query
-        def results = Source.createCriteria().list ([max:max, offset:offset]) {
-
-            if (name) {
-                and {
-                    eq('name', name)
-                }
-            }
-
-            if (sourceVersion) {
-                and {
-                    eq('source_version', sourceVersion)
-                }
-            }
-        }
-
-        Long count = results.totalCount
-
-        println("source search results count = " + count)
-        log.info("source search results count = " + count)
-
+        def results = getSources("select * from source;")
         queryResults.sourceList = results
-        queryResults.sourceCount = count
-
+        queryResults.sourceCount = results.size()
         return queryResults
     }
+
+    Map<String, Object> mvarSource() {
+        Map<String, Object> queryResults = [sourceList:[], sourceCount:0L]
+        def results = getSources("select * from  source where id in (select distinct source_id from variant_source);")
+        queryResults.sourceList = results
+        queryResults.sourceCount = results.size()
+        return queryResults
+    }
+
+    /**
+     * Returns sources given sql query on source table
+     * @param query
+     * @return
+     */
+    private List getSources(String query) {
+        def sources = []
+        try {
+            SessionImpl sessionImpl = sessionFactory.currentSession as SessionImpl
+            final Sql sql = new Sql(sessionImpl.connection())
+            sql.eachRow(query) { row ->
+                Source source = new Source()
+                source.name = row.name
+                source.sourceVersion = row.source_version
+                source.url = row.url
+                sources.add(source)
+            }
+        } catch (SQLException exc) {
+            log.debug('The following SQLException occurred: ' + exc.toString())
+        } finally {
+            def session = sessionFactory.currentSession
+            session.flush()
+            session.clear()
+        }
+        return sources
+    }
+
 }

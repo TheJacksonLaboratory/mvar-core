@@ -75,6 +75,7 @@ class VariantController implements GrailsConfigurationAware {
             @ApiImplicitParam(name = "dbSNPid", paramType = "query", required = false, value = "dbSNP ID", dataType = "string"),
             @ApiImplicitParam(name = "impact", paramType = "query", required = false, value = "Variant impact", dataType = "string"),
             @ApiImplicitParam(name = "chr", paramType = "query", required = false, value = "Chromosome", dataType = "string"),
+            @ApiImplicitParam(name = "assembly", paramType = "query", required = true, value = "Genome reference: can be mm10 or mm39. Default is mm39.", dataType = "string"),
             @ApiImplicitParam(name = "startPos", paramType = "query", required = false, value = "Starting position", dataType = "integer"),
             @ApiImplicitParam(name = "endPos", paramType = "query", required = false, value = "Ending position", dataType = "integer"),
             @ApiImplicitParam(name = "applicationType", paramType = "header", required = true, defaultValue = "web", value = "Application Types", dataType = "string"),
